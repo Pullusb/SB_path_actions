@@ -56,7 +56,7 @@ def openFolder(folderpath):
         #print("operating system : Windows")
         if not folderpath:
             return('/')
-
+        
     else:#elif myOS == "darwin":
         # OS X
         #print("operating system : MACos")
@@ -181,12 +181,12 @@ def BrowserPathActionsButtons(self, context):
         #button to paste blend path in blender filebrowser's path (file must be saved for the button to appear)
         row.operator(
             BrowserToBlendFolder.bl_idname,
-            text="Blend location to filepath",
+            text="Blend location",
             icon="APPEND_BLEND")
     #button to open current filepath destination in OS browser
     row.operator(
         OpenFilepathFolder.bl_idname,
-        text="Open filepath folder",
+        text="Open folder",
         icon="FILE_FOLDER")
 
 ################## Registration
