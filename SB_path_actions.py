@@ -170,7 +170,8 @@ def PathActionsPanel(self, context):
     split.label("Open: ")
     split.operator(OpenBlendFolder.bl_idname, text = "blender folder", icon = 'BLENDER')
     split.operator(OpenOutputFolder.bl_idname, text = "output folder", icon = 'FILE_FOLDER')
-    layout.operator(SwitchPathOperator.bl_idname, text = "Toggle path mode", icon = 'PARTICLE_PATH')
+    ##button for toggle path mode (a bit useless, access via search bar is better)
+    #layout.operator(SwitchPathOperator.bl_idname, text = "Toggle path mode", icon = 'PARTICLE_PATH')
 
 
 def BrowserPathActionsButtons(self, context):
