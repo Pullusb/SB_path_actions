@@ -1,7 +1,9 @@
 # SB Path-Actions
 
 Add buttons in Blender UI to open directory of blend file or output path in the OS explorer.
-
+  
+**[Download latest](https://raw.githubusercontent.com/Pullusb/SB_Path-Actions/master/SB_path_actions.py)** (right click, save Target as)  
+  
 --------
 
 Description:
