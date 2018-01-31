@@ -1,4 +1,4 @@
-# SB Path-Actions
+# Path-Actions
 
 Add buttons in Blender UI to open directory of blend file or output path in the OS explorer.
   
