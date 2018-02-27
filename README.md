@@ -4,6 +4,8 @@ Add buttons in Blender UI to open directory of blend file or output path in the 
   
 **[Download latest](https://raw.githubusercontent.com/Pullusb/SB_Path-Actions/master/SB_path_actions.py)** (right click, save Target as)  
   
+**[DEMO Youtube](https://youtu.be/DBHRc0oE7rI)**  
+  
 --------
 
 Description:
