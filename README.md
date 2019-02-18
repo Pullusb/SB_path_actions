@@ -3,19 +3,43 @@
 Add buttons in Blender UI to open directory of blend file or output path in the OS explorer.
   
 **[Download latest](https://raw.githubusercontent.com/Pullusb/SB_Path-Actions/master/SB_path_actions.py)** (right click, save Target as)  
-  
+
+**[Download older (for Blender 2.7)](https://raw.githubusercontent.com/Pullusb/SB_Path-Actions/master/SB_path_actions_279.py)** (right click, save Target as)  
+
 **[DEMO Youtube](https://youtu.be/DBHRc0oE7rI)**  
   
 --------
 
 Description:
 
-Add 3 buttons in the Properties>Output pannel
-"Toggle path mode" button simply switch the output path between relative and absolute
+### 2.8 Version :
+
+A folder icon at the right of the topbar allow to open Blend's current directory
+![OpenBlendFolder](http://www.samuelbernou.fr/imgs/git/Bl_PathAction_OpenBlendFolder28.png)
+
+Add 2 buttons in the header of the filebrowser
+"Blend location" button bring the filebrowser where the blend is saved (button does'nt appear if not saved)
+  
+"Open folder" button open the path of the filebrowser in the OS explorer.
+
+![Browser](http://www.samuelbernou.fr/imgs/git/Bl_PathAction_Browser28.png)
+  
+  
+Also add two Operators accessible through search (F3 or spacebar in 2.8):
+
+"Open output folder" just open output path in OS.
+![openOutput](http://www.samuelbernou.fr/imgs/git/Bl_PathAction_openOutput28.png)
+
+"Switch output path mode" simply toggle the output path between relative and absolute.
+![switchPath](http://www.samuelbernou.fr/imgs/git/Bl_PathAction_switchPath28.png)
+
+
+
+
+### Older version for 2.7 :
+Add 2 buttons in the Properties>Output pannel
 
 ![Output pannel with Path-Actions Addon enabled](http://www.samuelbernou.fr/imgs/git/Addon_PathAction_screen_output-tab.PNG)
-
-# Update 1.3
 
 Add 2 buttons in the header of the filebrowser
 "Blend location" button bring the filebrowser where the blend is saved (button does'nt appear if not saved)
