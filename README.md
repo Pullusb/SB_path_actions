@@ -14,11 +14,12 @@ Description:
 
 ### 2.8 Version :
 
-A folder icon at the right of the topbar allow to open Blend's current directory
+Add a folder icon button at the right of the topbar allow to open Blend's current directory
 
 ![OpenBlendFolder](https://github.com/Pullusb/images_repo/blob/master/Bl_PathAction_OpenBlendFolder28.png)
-
-Add 2 buttons in the header of the filebrowser
+  
+Add 2 buttons in the header of the filebrowser:
+  
 "Blend location" button bring the filebrowser where the blend is saved (button does'nt appear if not saved)
   
 "Open folder" button open the path of the filebrowser in the OS explorer.
@@ -31,7 +32,7 @@ Also add two Operators accessible through search (F3 or spacebar in 2.8):
 "Open output folder" just open output path in OS.
 
 ![openOutput](https://github.com/Pullusb/images_repo/blob/master/Bl_PathAction_openOutput28.png)
-
+  
 "Switch output path mode" simply toggle the output path between relative and absolute.
 
 ![switchPath](https://github.com/Pullusb/images_repo/blob/master/Bl_PathAction_switchPath28.png)
