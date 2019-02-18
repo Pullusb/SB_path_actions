@@ -14,7 +14,7 @@ Description:
 
 ### 2.8 Version :
 
-Add a folder icon button at the right of the topbar allow to open Blend's current directory
+Add a folder icon button at the right of the topbar that open Blend's current directory
 
 ![OpenBlendFolder](https://github.com/Pullusb/images_repo/blob/master/Bl_PathAction_OpenBlendFolder28.png)
   
@@ -27,7 +27,7 @@ Add 2 buttons in the header of the filebrowser:
 ![Browser](https://github.com/Pullusb/images_repo/blob/master/Bl_PathAction_Browser28.png)
   
   
-Also add two Operators accessible through search (F3 or spacebar in 2.8):
+Also add two Operators accessible through search (F3 in 2.8):
 
 "Open output folder" just open output path in OS.
 
