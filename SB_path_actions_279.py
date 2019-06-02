@@ -19,13 +19,13 @@
 bl_info = {
     "name": "Path Actions",
     "author": "Samuel Bernou",
-    "version": (1, 3),
-    "blender": (2, 75, 0),
+    "version": (1, 3, 2),
+    "blender": (2, 79, 0),
     "location": "Properties > Render > Output and filebrowser",
     "description": "open output path or blend file location in OS explorer",
     "warning": "",
-    "wiki_url": "",
-    "tracker_url": "",
+    "wiki_url": "https://github.com/Pullusb/SB_Path-Actions",
+    "tracker_url": "https://github.com/Pullusb/SB_Path-Actions/issues/new",
     "category": "System"}
 
 """
@@ -74,7 +74,7 @@ def openFolder(folderpath):
     system(fullcmd)
 
 
-class BrowserToBlendFolder(bpy.types.Operator):
+class PATH_OT_BrowserToBlendFolder(bpy.types.Operator):
     """current blend path to the browser filepath"""
     bl_idname = "path.paste_path"
     bl_label = "Browser to blend folder"
@@ -83,7 +83,7 @@ class BrowserToBlendFolder(bpy.types.Operator):
         bpy.ops.file.select_bookmark(dir="//")
         return {"FINISHED"}
 
-class OpenFilepathFolder(bpy.types.Operator):
+class PATH_OT_OpenFilepathFolder(bpy.types.Operator):
     """Open browser filepath directory in OS explorer"""
     bl_idname = "path.open_filepath"
     bl_label = "Open Current filepath"
@@ -97,7 +97,7 @@ class OpenFilepathFolder(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class OpenBlendFolder(bpy.types.Operator):
+class PATH_OT_OpenBlendFolder(bpy.types.Operator):
     """open blend's directory in OS explorer"""
     bl_idname = "path.open_blend"
     bl_label = "Open blend folder"
@@ -112,7 +112,7 @@ class OpenBlendFolder(bpy.types.Operator):
         return {'FINISHED'}
    
 
-class OpenOutputFolder(bpy.types.Operator):
+class PATH_OT_OpenOutputFolder(bpy.types.Operator):
     """open output directory in OS explorer"""
     bl_idname = "path.open_output"
     bl_label = "Open output folder"
@@ -142,7 +142,7 @@ class OpenOutputFolder(bpy.types.Operator):
         return {'FINISHED'}
 
        
-class SwitchPathOperator(bpy.types.Operator):
+class PATH_OT_SwitchPathOperator(bpy.types.Operator):
     """toggle path absolute/relative"""
     bl_idname = "path.switch_operator"
     bl_label = "Switch output path mode"
@@ -158,9 +158,15 @@ class SwitchPathOperator(bpy.types.Operator):
             bpy.context.scene.render.filepath = bpy.path.relpath(fpath)
         
         return {'FINISHED'}
-    
+
 
 ################## Pannel Integration
+
+
+def TopBarOpenButton(self, context):
+    layout = self.layout
+    if bpy.data.is_saved:
+        layout.operator(PATH_OT_OpenBlendFolder.bl_idname, text = "", icon = 'FILE_FOLDER')#BLENDER
 
 def PathActionsPanel(self, context):
     """Path operations"""
@@ -168,10 +174,9 @@ def PathActionsPanel(self, context):
     split = layout.split(percentage=.2, align=True)
     
     split.label("Open: ")
-    split.operator(OpenBlendFolder.bl_idname, text = "blender folder", icon = 'BLENDER')
-    split.operator(OpenOutputFolder.bl_idname, text = "output folder", icon = 'FILE_FOLDER')
-    ##button for toggle path mode (a bit useless, access via search bar is better)
-    #layout.operator(SwitchPathOperator.bl_idname, text = "Toggle path mode", icon = 'PARTICLE_PATH')
+    split.operator(PATH_OT_OpenBlendFolder.bl_idname, text = "blender folder", icon = 'BLENDER')
+    split.operator(PATH_OT_OpenOutputFolder.bl_idname, text = "output folder", icon = 'FILE_FOLDER')
+    #layout.operator(PATH_OT_SwitchPathOperator.bl_idname, text = "Toggle path mode", icon = 'PARTICLE_PATH')
 
 
 def BrowserPathActionsButtons(self, context):
@@ -181,33 +186,35 @@ def BrowserPathActionsButtons(self, context):
     if bpy.data.filepath:
         #button to paste blend path in blender filebrowser's path (file must be saved for the button to appear)
         row.operator(
-            BrowserToBlendFolder.bl_idname,
+            PATH_OT_BrowserToBlendFolder.bl_idname,
             text="Blend location",
             icon="APPEND_BLEND")
     #button to open current filepath destination in OS browser
     row.operator(
-        OpenFilepathFolder.bl_idname,
+        PATH_OT_OpenFilepathFolder.bl_idname,
         text="Open folder",
         icon="FILE_FOLDER")
 
 ################## Registration
 
 def register():
-    bpy.utils.register_class(SwitchPathOperator)
-    bpy.utils.register_class(OpenOutputFolder)
-    bpy.utils.register_class(OpenBlendFolder)
-    bpy.utils.register_class(BrowserToBlendFolder)
-    bpy.utils.register_class(OpenFilepathFolder)
+    bpy.utils.register_class(PATH_OT_SwitchPathOperator)
+    bpy.utils.register_class(PATH_OT_OpenOutputFolder)
+    bpy.utils.register_class(PATH_OT_OpenBlendFolder)
+    bpy.utils.register_class(PATH_OT_BrowserToBlendFolder)
+    bpy.utils.register_class(PATH_OT_OpenFilepathFolder)
     bpy.types.FILEBROWSER_HT_header.append(BrowserPathActionsButtons)
+    bpy.types.INFO_HT_header.append(TopBarOpenButton)
     bpy.types.RENDER_PT_output.append(PathActionsPanel)
 
 def unregister():
-    bpy.utils.unregister_class(OpenOutputFolder)
-    bpy.utils.unregister_class(OpenBlendFolder)
-    bpy.utils.unregister_class(BrowserToBlendFolder)
-    bpy.utils.unregister_class(OpenFilepathFolder)
-    bpy.utils.unregister_class(SwitchPathOperator)
+    bpy.utils.unregister_class(PATH_OT_OpenOutputFolder)
+    bpy.utils.unregister_class(PATH_OT_OpenBlendFolder)
+    bpy.utils.unregister_class(PATH_OT_BrowserToBlendFolder)
+    bpy.utils.unregister_class(PATH_OT_OpenFilepathFolder)
+    bpy.utils.unregister_class(PATH_OT_SwitchPathOperator)
     bpy.types.RENDER_PT_output.remove(PathActionsPanel)
+    bpy.types.INFO_HT_header.remove(TopBarOpenButton)
     bpy.types.FILEBROWSER_HT_header.remove(BrowserPathActionsButtons)
     
 if __name__ == "__main__":
