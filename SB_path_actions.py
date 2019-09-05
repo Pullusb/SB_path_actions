@@ -19,13 +19,13 @@
 bl_info = {
     "name": "Path Actions",
     "author": "Samuel Bernou",
-    "version": (1, 3, 1),
+    "version": (1, 3, 3),
     "blender": (2, 80, 0),
     "location": "Properties > Render > Output and filebrowser",
     "description": "Open output path or blend file location in OS explorer",
     "warning": "",
     "wiki_url": "https://github.com/Pullusb/SB_Path-Actions",
-    "tracker_url": "",
+    "tracker_url": "https://github.com/Pullusb/SB_Path-Actions/issues/new",
     "category": "System"}
 
 """
@@ -37,6 +37,7 @@ quick-use: search "folder" in the spacebar menu
 
 import bpy
 from sys import platform
+import subprocess
 from os import path, system
 
 def openFolder(folderpath):
@@ -65,6 +66,7 @@ def openFolder(folderpath):
     if not folderpath:
         return('//')
 
+    """#old system method
     #double quote the path to avoid problem with special character
     folderpath = '"' + folderpath + '"'
     fullcmd = cmd + folderpath
@@ -72,6 +74,12 @@ def openFolder(folderpath):
     #print & launch open command
     print(fullcmd)
     system(fullcmd)
+    """
+    #if bad opening use : folderpath = os.path.normpath(folderpath)
+    fullcmd = [cmd, folderpath]
+    print(fullcmd)
+    subprocess.Popen(fullcmd)
+    return ' '.join(fullcmd)#back to string to print
 
 
 class PATH_OT_BrowserToBlendFolder(bpy.types.Operator):
