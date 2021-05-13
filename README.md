@@ -2,7 +2,7 @@
 
 Add buttons in Blender UI to open directory of blend file or output path in the OS explorer.
   
-**[Download latest](https://raw.githubusercontent.com/Pullusb/SB_Path-Actions/master/SB_path_actions.py)** (right click, save Target as)  
+**[Download latest](https://github.com/Pullusb/SB_path_actions/archive/refs/heads/master.zip)**
 
 **[Download older (for Blender 2.7)](https://raw.githubusercontent.com/Pullusb/SB_Path-Actions/master/SB_path_actions_279.py)** (right click, save Target as)  
 
@@ -10,15 +10,17 @@ Add buttons in Blender UI to open directory of blend file or output path in the 
   
 --------
 
-Description:
+## Description:
 
+Consult [changelog here](CHANGELOG.md)
 ### 2.8 Version :
+
 
 Add a folder icon button at the right of the topbar that open Blend's current directory
 
 ![OpenBlendFolder](https://github.com/Pullusb/images_repo/blob/master/Bl_PathAction_OpenBlendFolder28.png)
   
-Add 2 buttons in the header of the filebrowser:
+Add 2 buttons in the footer of the filebrowser: (heaser in old version)
   
 "Blend location" button bring the filebrowser where the blend is saved (button does'nt appear if not saved)
   
@@ -26,7 +28,7 @@ Add 2 buttons in the header of the filebrowser:
 
 ![Browser](https://github.com/Pullusb/images_repo/blob/master/Bl_PathAction_Browser28.png)
   
-  
+
 Also add two Operators accessible through search (F3 in 2.8):
 
 "Open output folder" just open output path in OS.
@@ -37,6 +39,8 @@ Also add two Operators accessible through search (F3 in 2.8):
 
 ![switchPath](https://github.com/Pullusb/images_repo/blob/master/Bl_PathAction_switchPath28.png)
 
+
+Add Shortcut : `Ctrl + Alt+ Shift + O` pop up a search in recent history to quickly find a previous to open.
 
 --------
 
