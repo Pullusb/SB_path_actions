@@ -5,6 +5,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [1.5.0] - 2021-05-18
+
+### Added
+- linux: now opening file also select pointed file (if nemo or nautilus filebrowser are found)
+
 ## [1.4.0] - 2021-05-13
 
 ### Added
@@ -28,10 +33,10 @@ now display only in top right corner
 
 
 <!--
-Added for new features.
-Changed for changes in existing functionality.
-Deprecated for soon-to-be removed features.
-Removed for now removed features.
-Fixed for any bug fixes.
-Security in case of vulnerabilities.
+Added: for new features.
+Changed: for changes in existing functionality.
+Deprecated: for soon-to-be removed features.
+Removed: for now removed features.
+Fixed: for any bug fixes.
+Security: in case of vulnerabilities.
 -->

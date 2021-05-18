@@ -2,7 +2,7 @@ import bpy
 from sys import platform
 import subprocess
 from os.path import isfile, dirname, normpath
-
+from shutil import which
 
 def openFolder(folderpath):
     """
@@ -28,10 +28,21 @@ def openFolder(folderpath):
         return('//')
 
     if isfile(folderpath): # When pointing to a file
+        select = False
         if myOS.startswith('win'):
             # Keep same path but add "/select" the file (windows cmd option)
             cmd = 'explorer /select,'
-        else:
+            select = True
+
+        elif myOS.startswith(('linux','freebsd')):
+            if which('nemo'):
+                cmd = 'nemo --no-desktop'
+                select = True
+            elif which('nautilus'):
+                cmd = 'nautilus --no-desktop'
+                select = True
+
+        if not select:
             # Use directory of the file
             folderpath = dirname(folderpath)
 
