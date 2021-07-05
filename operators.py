@@ -28,14 +28,33 @@ class PATH_OT_OpenFilepathFolder(Operator):
         return {"FINISHED"}
 
 class PATH_OT_OpenBlendFolder(Operator):
-    """open blend's directory in OS explorer"""
+    """Open blend's directory in OS explorer\nCtrl+Click: Copy full data path\nShift+Click: Copy path to directory"""
     bl_idname = "path.open_blend"
     bl_label = "Open blend folder"
     bl_options = {'REGISTER'}
 
+    @classmethod
+    def poll(cls, context):
+        return bpy.data.is_saved
+
+    def invoke(self, context, event):
+        self.ctrl = event.ctrl
+        self.shift = event.shift
+        return self.execute(context)
+
     def execute(self, context):
         fileloc = bpy.data.filepath # bpy.context.blend_data.filepath
         folder = dirname(fileloc)
+
+        if self.ctrl:
+            bpy.context.window_manager.clipboard = fileloc
+            self.report({'INFO'}, f'Copied: {fileloc}')
+            return {'FINISHED'}
+        if self.shift:
+            bpy.context.window_manager.clipboard = folder
+            self.report({'INFO'}, f'Copied: {folder}')
+            return {'FINISHED'}
+
         openFolder(fileloc)
          
         self.report({'INFO'}, "Blend's folder opened")
