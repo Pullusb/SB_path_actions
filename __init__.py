@@ -19,7 +19,7 @@
 bl_info = {
     "name": "Path Actions",
     "author": "Samuel Bernou",
-    "version": (1, 6, 0),
+    "version": (1, 6, 1),
     "blender": (2, 80, 0),
     "location": "Window top right corner and browser footer",
     "description": "Open output path or blend file location in OS explorer",

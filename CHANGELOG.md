@@ -5,12 +5,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
-## [1.5.0] - 2021-07-05
+## [1.6.1] - 2021-07-05
 
 ### Added
-- Added alternative functions to main button:
-    - combine with `Ctrl` to copy _full path to file_ instead of opening
-    - combine with `Shift` to copy _path to directory_ instead of opening
+- Added alternative functions to main button, instead of opening:
+    - combine with `Ctrl` to copy _full path to file_ 
+    - combine with `Shift` to copy _path to directory_ 
+    - combine with `Alt` to copy _file name_
 
 
 ## [1.5.0] - 2021-05-18

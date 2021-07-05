@@ -1,6 +1,6 @@
 import bpy
 from bpy.types import Operator
-from os.path import dirname, realpath, split, exists
+from os.path import dirname, basename, realpath, split, exists
 
 
 from .path_func import openFolder
@@ -28,7 +28,7 @@ class PATH_OT_OpenFilepathFolder(Operator):
         return {"FINISHED"}
 
 class PATH_OT_OpenBlendFolder(Operator):
-    """Open blend's directory in OS explorer\nCtrl+Click: Copy full data path\nShift+Click: Copy path to directory"""
+    """Open blend's directory in OS explorer\nCtrl: Copy full data path\nShift: Copy path to directory\nAlt: Copy file name"""
     bl_idname = "path.open_blend"
     bl_label = "Open blend folder"
     bl_options = {'REGISTER'}
@@ -39,6 +39,7 @@ class PATH_OT_OpenBlendFolder(Operator):
 
     def invoke(self, context, event):
         self.ctrl = event.ctrl
+        self.alt = event.alt
         self.shift = event.shift
         return self.execute(context)
 
@@ -53,6 +54,10 @@ class PATH_OT_OpenBlendFolder(Operator):
         if self.shift:
             bpy.context.window_manager.clipboard = folder
             self.report({'INFO'}, f'Copied: {folder}')
+            return {'FINISHED'}
+        if self.alt:
+            bpy.context.window_manager.clipboard = basename(fileloc)
+            self.report({'INFO'}, f'Copied: {basename(fileloc)}')
             return {'FINISHED'}
 
         openFolder(fileloc)
