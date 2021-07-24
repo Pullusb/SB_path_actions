@@ -16,6 +16,7 @@ def register_keymaps(force=False):
     # type = "O", value = "PRESS", shift = True, ctrl = True, alt = True)
     # addon_keymaps.append((km, kmi))
     
+    ## Menu open with search
     if not kmi or force:
         kmi = km.keymap_items.new(idn, 
         type = "O", value = "PRESS", shift = True, ctrl = True, alt = True)
@@ -24,14 +25,12 @@ def register_keymaps(force=False):
     #     print(f'Found kmi {idn}')
     
     ## Open last blend in one go
-    idn = 'path.open_last_file'
-    kmi = km.keymap_items.get(idn)
-    if not kmi or force:
-        kmi = km.keymap_items.new(idn, 
-        type = "P", value = "PRESS", shift = True, ctrl = True, alt = True)
-        addon_keymaps.append((km, kmi))
-    # else:
-    #     print(f'Found kmi {idn}')
+    # idn = 'path.open_last_file'
+    # kmi = km.keymap_items.get(idn)
+    # if not kmi or force:
+    #     kmi = km.keymap_items.new(idn, 
+    #     type = "P", value = "PRESS", shift = True, ctrl = True, alt = True)
+    #     addon_keymaps.append((km, kmi))
 
 def unregister_keymaps():
     for km, kmi in addon_keymaps:

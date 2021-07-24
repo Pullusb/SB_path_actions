@@ -5,6 +5,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [1.7.0] - 2021-07-24
+
+### Added
+- Added 5 buttons in addon preferences to open often searched locations.
+
+### Removed
+- Shortcut to reopen last blend without warning
+
+### Fixed
+- operator name to snake case
 ## [1.6.1] - 2021-07-05
 
 ### Added

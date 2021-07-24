@@ -5,7 +5,7 @@ from os.path import dirname, basename, realpath, split, exists
 
 from .path_func import openFolder
 
-class PATH_OT_BrowserToBlendFolder(Operator):
+class PATH_OT_browser_to_blend_folder(Operator):
     """current blend path to the browser filepath"""
     bl_idname = "path.paste_path"
     bl_label = "Browser to blend folder"
@@ -14,7 +14,7 @@ class PATH_OT_BrowserToBlendFolder(Operator):
         bpy.ops.file.select_bookmark(dir="//")
         return {"FINISHED"}
 
-class PATH_OT_OpenFilepathFolder(Operator):
+class PATH_OT_open_filepath_folder(Operator):
     """Open browser filepath directory in OS explorer"""
     bl_idname = "path.open_filepath"
     bl_label = "Open Current filepath"
@@ -27,7 +27,7 @@ class PATH_OT_OpenFilepathFolder(Operator):
             self.report({'WARNING'}, "Only works in fileBrowser context")
         return {"FINISHED"}
 
-class PATH_OT_OpenBlendFolder(Operator):
+class PATH_OT_open_blend_folder(Operator):
     """Open blend's directory in OS explorer\nCtrl: Copy full data path\nShift: Copy path to directory\nAlt: Copy file name"""
     bl_idname = "path.open_blend"
     bl_label = "Open blend folder"
@@ -67,7 +67,7 @@ class PATH_OT_OpenBlendFolder(Operator):
 
 
 ## Only accessible trough search
-class PATH_OT_OpenOutputFolder(Operator):
+class PATH_OT_open_output_folder(Operator):
     """open output directory in OS explorer"""
     bl_idname = "path.open_output"
     bl_label = "Open output folder"
@@ -98,7 +98,7 @@ class PATH_OT_OpenOutputFolder(Operator):
 
        
 ## Only accessible trough search
-class PATH_OT_SwitchPathOperator(Operator):
+class PATH_OT_switch_path_operator(Operator):
     """toggle path absolute/relative"""
     bl_idname = "path.switch_output_path_mode"
     bl_label = "Switch output path mode"
@@ -117,11 +117,11 @@ class PATH_OT_SwitchPathOperator(Operator):
 
 
 classes = (
-    PATH_OT_SwitchPathOperator,
-    PATH_OT_OpenOutputFolder,
-    PATH_OT_OpenBlendFolder,
-    PATH_OT_BrowserToBlendFolder,
-    PATH_OT_OpenFilepathFolder,
+    PATH_OT_switch_path_operator,
+    PATH_OT_open_output_folder,
+    PATH_OT_open_blend_folder,
+    PATH_OT_browser_to_blend_folder,
+    PATH_OT_open_filepath_folder,
 )
 
 def register():
