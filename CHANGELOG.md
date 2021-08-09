@@ -5,6 +5,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [1.8.0] - 2021-08-09
+
+### Added
+- list all addon individual locations in addon prefs
+- buttons to search by addon name and open directory in browser 
+
 ## [1.7.0] - 2021-07-24
 
 ### Added

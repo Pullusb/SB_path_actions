@@ -2,6 +2,7 @@ import bpy
 import os
 from os.path import basename, dirname, join, exists
 from bpy.types import Operator
+from . import path_func
 
 
 ### Open Last file
@@ -109,9 +110,32 @@ class PATH_OT_search_open_history(Operator) :
         wm.invoke_search_popup(self) # can't specify size... width=500, height=600
         return {'FINISHED'}
 
+class PATH_OT_open_browser(Operator):
+    bl_idname = "path.open_browser"
+    bl_label = "Open Path In Browser"
+    bl_description = "Open passed file/folder in OS browser. If a file, the file will be selected"
+    bl_options = {"REGISTER", "INTERNAL"}
+
+    filepath : bpy.props.StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        if not self.filepath:
+            self.report({'ERROR'}, 'No filepath')
+            return {"CANCELLED"}
+        if not exists(self.filepath):
+            self.report({'ERROR'}, f'Not found : {self.filepath}')
+            return {"CANCELLED"}
+
+        path_func.openFolder(self.filepath)
+
+        self.report({'INFO'}, f'Open: {self.filepath}')
+        return {"FINISHED"}
+
+
 classes = (
 PATH_OT_open_last_file,
-PATH_OT_search_open_history
+PATH_OT_search_open_history,
+PATH_OT_open_browser,
 )
 
 def register():
