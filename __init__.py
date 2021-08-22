@@ -19,12 +19,12 @@
 bl_info = {
     "name": "Path Actions",
     "author": "Samuel Bernou",
-    "version": (1, 8, 0),
+    "version": (1, 8, 1),
     "blender": (2, 80, 0),
     "location": "Window top right corner, browser footer, addon prefs",
     "description": "Open blend file folder in OS explorer",
     "warning": "",
-    "wiki_url": "https://github.com/Pullusb/SB_path_actions",
+    "doc_url": "https://github.com/Pullusb/SB_path_actions",
     "tracker_url": "https://github.com/Pullusb/SB_path_actions/issues/new",
     "category": "System"}
 
@@ -150,7 +150,9 @@ class PATH_addon_preferences(bpy.types.AddonPreferences):
         if self.show_addon_open_buttons:
             box.prop(self, 'filter')
             ## responsive column list
-            if context.area.width > 1750 * context.preferences.view.ui_scale:
+            if context.area.width > 2050 * context.preferences.view.ui_scale:
+                colnum = 7
+            elif context.area.width > 1750 * context.preferences.view.ui_scale:
                 colnum = 6
             elif context.area.width > 1450 * context.preferences.view.ui_scale:
                 colnum = 5

@@ -1,3 +1,4 @@
+import enum
 import bpy
 import re   
 from . import path_func
@@ -5,12 +6,29 @@ from pathlib import Path
 from bpy.types import Operator
 
 
+def get_addon_location(fp) -> str:
+    '''get addon filepath and return a name of the addon location'''
+    # fp = str(Path(fp))
+    if fp.startswith( str(Path(bpy.utils.user_resource('SCRIPTS', "addons"))) ):
+        return 'user'
+
+    if fp.startswith( str(Path(bpy.utils.resource_path('LOCAL')) / 'scripts' / 'addons') ):
+        return 'native'
+
+    external_scripts = bpy.context.preferences.filepaths.script_directory
+    if external_scripts:
+        if fp.startswith( str(Path(external_scripts)) ):
+            return 'external'
+
+    return 'other'
+
 def get_addons_modules_infos(filter="ALL"):
     import addon_utils
 
     addon_list = []
+    module_list = []
     remodule = re.compile(r"<module '(.*?)' from '(.*?)'>")
-
+    
     for i, m in enumerate(addon_utils.modules()):
         n = m.bl_info.get('name','')
         
@@ -29,10 +47,25 @@ def get_addons_modules_infos(filter="ALL"):
         
         if not diskname or not n or not fp:
             continue
+        
+        # [0] diskpath, [1] bl_info name, [2] Diskname
         addon_list.append((str(fp), n, diskname))
+        # module (can access m.bl_info['version']...etc)
+        module_list.append(m)
+
+    ## / treat duplicate name (check for infos on conflict)
+    # find duplicate indexes
+    namelist = [x[1] for x in addon_list]
+    dup_index = list(set(i for i, x in enumerate(namelist) if namelist.count(x) > 1))
+
+    # add version and location name
+    for idx in dup_index:
+        loc = get_addon_location(addon_list[idx][0])
+        version = str(module_list[idx].bl_info.get('version', '')).replace(" ", "").strip('()')
+        # replace with new tuple
+        addon_list[idx] = (addon_list[idx][0], f'{addon_list[idx][1]} ({loc} {version})', addon_list[idx][2])    
 
     return addon_list
-
 
 def get_addon_list(self, context):
     '''return (identifier, name, description) of enum content'''
