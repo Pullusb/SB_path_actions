@@ -2,6 +2,8 @@ import bpy
 
 addon_keymaps = []
 def register_keymaps(force=False):
+    if bpy.app.background:
+        return
     addon = bpy.context.window_manager.keyconfigs.addon
     km = addon.keymaps.new(name = "Window", space_type = "EMPTY")
 
@@ -33,12 +35,15 @@ def register_keymaps(force=False):
     #     addon_keymaps.append((km, kmi))
 
 def unregister_keymaps():
+    if bpy.app.background:
+        return
     for km, kmi in addon_keymaps:
         if km.keymap_items.get(kmi.idname):
             km.keymap_items.remove(kmi)
     addon_keymaps.clear()
 
 """ 
+# /old
 class PATH_OT_re_register_keymap(bpy.types.Operator):
     bl_idname = "path.re_register_keymaps"
     bl_label = "Register Addon Keymaps"
@@ -47,7 +52,9 @@ class PATH_OT_re_register_keymap(bpy.types.Operator):
     def execute(self, context):        
         register_keymaps()
         return {'FINISHED'}
- """
+# old/
+
+# unregistered not exposed anymore
 class PATH_OT_re_register_keymap(bpy.types.Operator):
     bl_idname = "path.re_register_keymaps"
     bl_label = "Register Addon Keymaps"
@@ -87,13 +94,14 @@ class PATH_OT_re_register_keymap(bpy.types.Operator):
         # register again
         register_keymaps() #  force=True 
         return {'FINISHED'}
+"""
 
 ### ---
 
 def register():
     register_keymaps()
-    bpy.utils.register_class(PATH_OT_re_register_keymap)
+    # bpy.utils.register_class(PATH_OT_re_register_keymap)
 
 def unregister():
-    bpy.utils.unregister_class(PATH_OT_re_register_keymap)
+    # bpy.utils.unregister_class(PATH_OT_re_register_keymap)
     unregister_keymaps()
