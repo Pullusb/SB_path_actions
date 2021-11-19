@@ -5,6 +5,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [1.8.3] - 2021-11-19
+
+### Fixed
+- Error in addon preference from api change in 3.0.0
+
 ## [1.8.2] - 2021-08-30
 
 ### Fixed

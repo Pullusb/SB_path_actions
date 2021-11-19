@@ -9,7 +9,7 @@ from bpy.types import Operator
 def get_addon_location(fp) -> str:
     '''get addon filepath and return a name of the addon location'''
     # fp = str(Path(fp))
-    if fp.startswith( str(Path(bpy.utils.user_resource('SCRIPTS', "addons"))) ):
+    if fp.startswith( str(Path(bpy.utils.user_resource('SCRIPTS')) / 'addons') ):
         return 'user'
 
     if fp.startswith( str(Path(bpy.utils.resource_path('LOCAL')) / 'scripts' / 'addons') ):

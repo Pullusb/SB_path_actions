@@ -19,7 +19,7 @@
 bl_info = {
     "name": "Path Actions",
     "author": "Samuel Bernou",
-    "version": (1, 8, 2),
+    "version": (1, 8, 3),
     "blender": (2, 80, 0),
     "location": "Window top right corner, browser footer, addon prefs",
     "description": "Open blend folder in OS explorer",
@@ -109,7 +109,7 @@ class PATH_addon_preferences(bpy.types.AddonPreferences):
         
         row.label(text='Open: ', icon='FILE_FOLDER')
         # Local user addon source (usually appdata/.config folders). Where it goes when 'install from file'
-        row.operator("wm.path_open", text='User Addons').filepath = bpy.utils.user_resource('SCRIPTS', "addons")
+        row.operator("wm.path_open", text='User Addons').filepath = str(Path(bpy.utils.user_resource('SCRIPTS')) / 'addons')
         # local default installed addons (release)
         row.operator("wm.path_open", text='Native Addons').filepath = str(Path(bpy.utils.resource_path('LOCAL')) / 'scripts' / 'addons')
 
