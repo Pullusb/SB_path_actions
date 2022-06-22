@@ -5,6 +5,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [1.9.0] - 2022-06-22
+
+### Changed
+
+- file browser UI for `blend location` and `open folder` ops changed to left bar instead of header (header is hided in basic file browser), code from `Amaranth` addon by Pablo Vasquez
+- license model to oneliner `SPDX-License-Identifier: GPL-2.0-or-later`
 ## [1.8.3] - 2021-11-19
 
 ### Fixed
