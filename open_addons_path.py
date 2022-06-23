@@ -75,10 +75,11 @@ def get_addon_list(self, context):
 
 class PATH_OT_search_open_addon_path(Operator) :
     bl_idname = "path.open_addon_directory"
-    bl_label = 'Open addon directory'
+    bl_label = "Open Addon Directory"
+    bl_description = "Open chosen addon directory"
+    bl_options = {'REGISTER'}
     # important to have the updated enum here as bl_property
     bl_property = "addons_enum"
-
 
     addons_enum : bpy.props.EnumProperty(
         name="Addons",
@@ -96,7 +97,6 @@ class PATH_OT_search_open_addon_path(Operator) :
         chosen = self.addons_enum
         self.report({'INFO'}, f'Open: {chosen}')
         path_func.openFolder(chosen)
-
         return {'FINISHED'}
 
     def invoke(self, context, event):
