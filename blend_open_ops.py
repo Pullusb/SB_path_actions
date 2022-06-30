@@ -145,7 +145,7 @@ class PATH_OT_open_in_new_instance(Operator) :
 class PATH_OT_full_reopen(Operator) :
     bl_idname = "wm.full_reopen"
     bl_label = 'Full Reopen Blend'
-    bl_description = "Reopen blender full reload\nCtrl: Force reopen even if file is not saved"
+    bl_description = "Close and re-open blender file\nCtrl: Force reopen even if file is not saved"
     bl_options = {"REGISTER", "INTERNAL"}
 
     @classmethod
@@ -165,7 +165,6 @@ class PATH_OT_full_reopen(Operator) :
         col.label(text='(use Ctrl to bypass this prompt even if not saved)')
         
     def execute(self, context):
-        import time
         open_blend_new_instance()
         bpy.ops.wm.quit_blender()
         return {'FINISHED'}
@@ -180,30 +179,7 @@ class PATH_OT_open_side_blend(Operator) :
     def poll(cls, context):
         return bpy.data.is_saved
 
-    # There is a known bug with using a callback,
-    # Python must keep a reference to the strings returned by the callback
-    # or Blender will misbehave or even crash.
-
-    # history : bpy.props.StringProperty(default='', options={'SKIP_SAVE'}) # need to have a variable to store (to get it in self)
-
     def invoke(self, context, event):
-        # self.history = join(bpy.utils.user_resource('CONFIG'), 'recent-files.txt')
-        # if not exists(self.history):
-        #     self.report({'WARNING'}, 'No history file found')
-        #     return {'CANCELLED'}
-
-        # blends = []
-        # try:
-        #     with open(self.history, 'r') as fd:
-        #         blends = [fd.readline().strip() for line in fd]
-        # except:
-        #     self.report({'ERROR'}, f'error accessing recent-file.txt : {self.history}')
-        #     return {'CANCELLED'}
-
-        # if not blends:
-        #     self.report({'WARNING'}, f'Empty history !')
-        #     return {'CANCELLED'}
-
         ## list surrounding blends
         self.blend_list = [Path(i.path) for i in os.scandir(Path(bpy.data.filepath).parent) if i.is_file() and i.name.endswith('.blend')]
         if len(self.blend_list) < 2:
@@ -211,27 +187,32 @@ class PATH_OT_open_side_blend(Operator) :
             return {'CANCELLED'}
 
         self.blend_list.sort(key=lambda x: x.name) # needed ?
+        
         wm = context.window_manager
-        return wm.invoke_props_popup(self, event) # can't specify size... width=500, height=600 # bad register, need undo
+        ## using a 'props_popup' crashes blender (using dialog add an OK button...but works)
+        # return wm.invoke_props_popup(self, event) # need "undo" in bl_options else get an error
+
+        return context.window_manager.invoke_props_dialog(self)
 
     def draw(self, context):
         layout = self.layout
-        ## ('INVOKE_DEFAULT', 'INVOKE_REGION_WIN', 'INVOKE_REGION_CHANNELS', 'INVOKE_REGION_PREVIEW', 
-        # 'INVOKE_AREA', 'INVOKE_SCREEN', 'EXEC_DEFAULT', 'EXEC_REGION_WIN', 'EXEC_REGION_CHANNELS', 'EXEC_REGION_PREVIEW', 'EXEC_AREA', 'EXEC_SCREEN')
-        # layout.operator_context = "EXEC_DEFAULT" # no prompt if not saved
         col = layout.column()
         for path in self.blend_list:
             if path == Path(bpy.data.filepath):
-                row=col.row()
-                row.enabled=False
-                row.operator('wm.open_mainfile', text=path.name, emboss=False).filepath = str(path) # path.as_posix()
+                mainrow=col.row()
+                subrow = mainrow.row()
+                subrow.enabled=False
+                subrow.operator('wm.open_mainfile', text=path.name, emboss=False).filepath = str(path) # path.as_posix()
+                row = mainrow.row()
             else:
                 row=col.row()
-                # row.operator_context = "INVOKE_DEFAULT"
+                row.operator_context = "EXEC_AREA"# , (should be "INVOKE_AREA" if file was not saved)
                 op = row.operator('wm.open_mainfile', text=path.name, emboss=False)
+                op.load_ui = context.preferences.filepaths.use_load_ui
                 op.filepath = str(path)
-                op.load_ui = bpy.context.preferences.filepaths.use_load_ui
-                row.operator('wm.open_in_new_instance', text='', icon='FILE_BACKUP').filepath = str(path)
+                # row.operator('wm.open_mainfile', text=path.name, emboss=False).filepath = str(path)
+            
+            row.operator('wm.open_in_new_instance', text='', icon='FILE_BACKUP').filepath = str(path)
 
     def execute(self, context):
         return {'FINISHED'}

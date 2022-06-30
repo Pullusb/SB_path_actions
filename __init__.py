@@ -3,7 +3,7 @@
 bl_info = {
     "name": "Path Actions",
     "author": "Samuel Bernou",
-    "version": (1, 9, 3),
+    "version": (2, 0, 0),
     "blender": (2, 80, 0),
     "location": "Window top right corner, browser footer, addon prefs",
     "description": "Open blend folder in OS explorer",
@@ -41,7 +41,9 @@ class PATH_addon_preferences(bpy.types.AddonPreferences):
 
     # show_addon_loc_details : bpy.props.BoolProperty(name='All Addons load folders', default=False)
 
-    dev_mode : bpy.props.BoolProperty(name='Developper mode', default=False)
+    dev_mode : bpy.props.BoolProperty(name='Developer mode',
+        description='Add a button on upper-right corner to fully reopen blender with current file (not just revert)',
+        default=False)
 
     show_addon_open_buttons : bpy.props.BoolProperty(name='Addons Directory Shortcuts', default=False)
 

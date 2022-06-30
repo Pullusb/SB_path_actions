@@ -5,6 +5,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [2.0.0] - 2022-06-30
+
+### Added
+
+- developper mode: add a button on upper right corner to close and reopen blender with current blend
+    - Warn if file is not saved
+    - `Ctrl + Clic` on the button reopen without unsaved warning
+
+- `Shift + Clic` open a new menu to open files that are in same folder as the current blend
+    - click on blend names to open "in place"
+    - click on right icon to open in a new instance of blender
+
+### Changed
+
+- `Ctrl + Shift + Clic` to save to copy _path to directory_ (instead of `Shift` only previously)
+
 ## [1.9.1] - 2022-06-22
 
 ### Changed
