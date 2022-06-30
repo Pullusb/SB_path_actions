@@ -1,3 +1,4 @@
+from ast import operator
 import bpy
 import os
 from os.path import basename, dirname, join, exists
@@ -121,14 +122,13 @@ def open_blend_new_instance(filepath=None):
     else:
         cmd.insert(1, str(filepath))
     print('cmd: ', cmd)
-    if sys.platform.lower().startswith('darwin'):
+    if sys.platform.lower().startswith('linux'):
         subprocess.Popen(['gnome-terminal', '--'] + cmd) # check if env is passed
     else:
-        subprocess.Popen(cmd) # , shell=True
+        subprocess.Popen(cmd) #, shell=True
     ## potential flag for windows, need testing
     # subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
 
-    
 
 class PATH_OT_open_in_new_instance(Operator) :
     bl_idname = "wm.open_in_new_instance"
@@ -145,9 +145,25 @@ class PATH_OT_open_in_new_instance(Operator) :
 class PATH_OT_full_reopen(Operator) :
     bl_idname = "wm.full_reopen"
     bl_label = 'Full Reopen Blend'
-    bl_description = "Reopen blender full reload"
-    bl_options = {"REGISTER"}
+    bl_description = "Reopen blender full reload\nCtrl: Force reopen even if file is not saved"
+    bl_options = {"REGISTER", "INTERNAL"}
 
+    @classmethod
+    def poll(cls, context):
+        return bpy.data.is_saved
+
+    def invoke(self, context, event):
+        if bpy.data.is_dirty and not event.ctrl:
+            wm = context.window_manager
+            return wm.invoke_props_dialog(self)
+        return self.execute(context)
+    
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.label(text='File is not saved! Reopen anyway ?')
+        col.label(text='(use Ctrl to bypass this prompt even if not saved)')
+        
     def execute(self, context):
         import time
         open_blend_new_instance()
@@ -155,11 +171,15 @@ class PATH_OT_full_reopen(Operator) :
         return {'FINISHED'}
 
 class PATH_OT_open_side_blend(Operator) :
-    bl_idname = "path.open_side_blend"
+    bl_idname = "wm.open_side_blend"
     bl_label = 'Open Side Blend'
     bl_description = "Open blend in same folder as current"
     bl_options = {"REGISTER", "UNDO"}
-    
+
+    @classmethod
+    def poll(cls, context):
+        return bpy.data.is_saved
+
     # There is a known bug with using a callback,
     # Python must keep a reference to the strings returned by the callback
     # or Blender will misbehave or even crash.
@@ -186,14 +206,19 @@ class PATH_OT_open_side_blend(Operator) :
 
         ## list surrounding blends
         self.blend_list = [Path(i.path) for i in os.scandir(Path(bpy.data.filepath).parent) if i.is_file() and i.name.endswith('.blend')]
+        if len(self.blend_list) < 2:
+            self.report({"WARNING"}, 'No other blend file in current blend location !')
+            return {'CANCELLED'}
+
         self.blend_list.sort(key=lambda x: x.name) # needed ?
         wm = context.window_manager
-        wm.invoke_props_popup(self, event) # can't specify size... width=500, height=600 # bad register, need undo
-        # wm.invoke_props_dialog(self)
-        return {'FINISHED'}
+        return wm.invoke_props_popup(self, event) # can't specify size... width=500, height=600 # bad register, need undo
 
     def draw(self, context):
         layout = self.layout
+        ## ('INVOKE_DEFAULT', 'INVOKE_REGION_WIN', 'INVOKE_REGION_CHANNELS', 'INVOKE_REGION_PREVIEW', 
+        # 'INVOKE_AREA', 'INVOKE_SCREEN', 'EXEC_DEFAULT', 'EXEC_REGION_WIN', 'EXEC_REGION_CHANNELS', 'EXEC_REGION_PREVIEW', 'EXEC_AREA', 'EXEC_SCREEN')
+        # layout.operator_context = "EXEC_DEFAULT" # no prompt if not saved
         col = layout.column()
         for path in self.blend_list:
             if path == Path(bpy.data.filepath):
@@ -202,14 +227,13 @@ class PATH_OT_open_side_blend(Operator) :
                 row.operator('wm.open_mainfile', text=path.name, emboss=False).filepath = str(path) # path.as_posix()
             else:
                 row=col.row()
-                op = col.operator('wm.open_mainfile', text=path.name, emboss=False)
+                # row.operator_context = "INVOKE_DEFAULT"
+                op = row.operator('wm.open_mainfile', text=path.name, emboss=False)
                 op.filepath = str(path)
                 op.load_ui = bpy.context.preferences.filepaths.use_load_ui
                 row.operator('wm.open_in_new_instance', text='', icon='FILE_BACKUP').filepath = str(path)
 
-            
     def execute(self, context):
-        # bpy.ops.wm.open_mainfile(filepath=blend) # load_ui=True, use_scripts=True
         return {'FINISHED'}
 
 class PATH_OT_open_browser(Operator):

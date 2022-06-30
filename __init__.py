@@ -3,7 +3,7 @@
 bl_info = {
     "name": "Path Actions",
     "author": "Samuel Bernou",
-    "version": (1, 9, 2),
+    "version": (1, 9, 3),
     "blender": (2, 80, 0),
     "location": "Window top right corner, browser footer, addon prefs",
     "description": "Open blend folder in OS explorer",
@@ -41,6 +41,8 @@ class PATH_addon_preferences(bpy.types.AddonPreferences):
 
     # show_addon_loc_details : bpy.props.BoolProperty(name='All Addons load folders', default=False)
 
+    dev_mode : bpy.props.BoolProperty(name='Developper mode', default=False)
+
     show_addon_open_buttons : bpy.props.BoolProperty(name='Addons Directory Shortcuts', default=False)
 
     filter : bpy.props.EnumProperty(
@@ -54,6 +56,7 @@ class PATH_addon_preferences(bpy.types.AddonPreferences):
 
     def draw(self, context):
         layout = self.layout
+        layout.prop(self, 'dev_mode')
 
         box = layout.box()
         col = box.column()

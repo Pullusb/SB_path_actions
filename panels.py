@@ -1,14 +1,23 @@
 import bpy
+import os
 
 ### Topbar
 # add a button on top bar : TOPBAR_HT_upper_bar (there is a def draw_left and a def draw_right )
 #else add in the top lower bar : TOPBAR_HT_lower_bar
 
+def get_addon_prefs():
+    addon_name = os.path.splitext(__name__)[0]
+    preferences = bpy.context.preferences
+    addon_prefs = preferences.addons[addon_name].preferences
+    return addon_prefs
+
 def TopBarOpenButton(self, context):
     layout = self.layout
     region = context.region
     if region.alignment == 'RIGHT':
-        layout.operator("path.open_blend", text = "", icon = 'FILE_FOLDER')#BLENDER
+        if get_addon_prefs().dev_mode:
+            layout.operator("wm.full_reopen", text = "", icon = 'FILE_REFRESH')
+        layout.operator("path.open_blend", text = "", icon = 'FILE_FOLDER')
 
 ### File browser
 

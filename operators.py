@@ -28,7 +28,7 @@ class PATH_OT_open_filepath_folder(Operator):
         return {"FINISHED"}
 
 class PATH_OT_open_blend_folder(Operator):
-    """Open blend's directory in OS explorer\nCtrl: Copy full data path\nShift: Copy path to directory\nAlt: Copy file name"""
+    """Open blend's directory in OS explorer\nCtrl: Copy full data path\nCtrl+Shift: Copy path to directory\nAlt: Copy file name\nShift: Open a side blend"""
     bl_idname = "path.open_blend"
     bl_label = "Open blend folder"
     bl_options = {'REGISTER'}
@@ -47,15 +47,19 @@ class PATH_OT_open_blend_folder(Operator):
         fileloc = bpy.data.filepath # bpy.context.blend_data.filepath
         folder = dirname(fileloc)
 
-        if self.ctrl:
-            bpy.context.window_manager.clipboard = fileloc
-            self.report({'INFO'}, f'Copied: {fileloc}')
-            return {'FINISHED'}
-        if self.shift:
+        if self.ctrl and self.shift:
             bpy.context.window_manager.clipboard = folder
             self.report({'INFO'}, f'Copied: {folder}')
             return {'FINISHED'}
-        if self.alt:
+        elif self.ctrl:
+            bpy.context.window_manager.clipboard = fileloc
+            self.report({'INFO'}, f'Copied: {fileloc}')
+            return {'FINISHED'}
+        elif self.shift:
+            bpy.ops.wm.open_side_blend('INVOKE_DEFAULT')
+            self.report({'INFO'}, f'Open side blend')
+            return {'FINISHED'}
+        elif self.alt:
             bpy.context.window_manager.clipboard = basename(fileloc)
             self.report({'INFO'}, f'Copied: {basename(fileloc)}')
             return {'FINISHED'}
