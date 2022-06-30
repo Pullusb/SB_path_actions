@@ -1,6 +1,9 @@
 import bpy
 import os
 from os.path import basename, dirname, join, exists
+from pathlib import Path
+import sys
+import subprocess
 from bpy.types import Operator
 from . import path_func
 
@@ -110,6 +113,105 @@ class PATH_OT_search_open_history(Operator) :
         wm.invoke_search_popup(self) # can't specify size... width=500, height=600
         return {'FINISHED'}
 
+def open_blend_new_instance(filepath=None):
+    filepath = filepath or bpy.data.filepath
+    cmd = sys.argv
+    if len(cmd) > 1 and cmd[1].endswith('.blend'):
+        cmd[1] = str(filepath)
+    else:
+        cmd.insert(1, str(filepath))
+    print('cmd: ', cmd)
+    if sys.platform.lower().startswith('darwin'):
+        subprocess.Popen(['gnome-terminal', '--'] + cmd) # check if env is passed
+    else:
+        subprocess.Popen(cmd) # , shell=True
+    ## potential flag for windows, need testing
+    # subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
+
+    
+
+class PATH_OT_open_in_new_instance(Operator) :
+    bl_idname = "wm.open_in_new_instance"
+    bl_label = 'Open Blend In New Instance'
+    bl_description = "Open blend file in a new instance of blender"
+    bl_options = {"REGISTER", "INTERNAL"}
+
+    filepath : bpy.props.StringProperty(default='', options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        open_blend_new_instance(self.filepath)
+        return {'FINISHED'}
+
+class PATH_OT_full_reopen(Operator) :
+    bl_idname = "wm.full_reopen"
+    bl_label = 'Full Reopen Blend'
+    bl_description = "Reopen blender full reload"
+    bl_options = {"REGISTER"}
+
+    def execute(self, context):
+        import time
+        open_blend_new_instance()
+        bpy.ops.wm.quit_blender()
+        return {'FINISHED'}
+
+class PATH_OT_open_side_blend(Operator) :
+    bl_idname = "path.open_side_blend"
+    bl_label = 'Open Side Blend'
+    bl_description = "Open blend in same folder as current"
+    bl_options = {"REGISTER", "UNDO"}
+    
+    # There is a known bug with using a callback,
+    # Python must keep a reference to the strings returned by the callback
+    # or Blender will misbehave or even crash.
+
+    # history : bpy.props.StringProperty(default='', options={'SKIP_SAVE'}) # need to have a variable to store (to get it in self)
+
+    def invoke(self, context, event):
+        # self.history = join(bpy.utils.user_resource('CONFIG'), 'recent-files.txt')
+        # if not exists(self.history):
+        #     self.report({'WARNING'}, 'No history file found')
+        #     return {'CANCELLED'}
+
+        # blends = []
+        # try:
+        #     with open(self.history, 'r') as fd:
+        #         blends = [fd.readline().strip() for line in fd]
+        # except:
+        #     self.report({'ERROR'}, f'error accessing recent-file.txt : {self.history}')
+        #     return {'CANCELLED'}
+
+        # if not blends:
+        #     self.report({'WARNING'}, f'Empty history !')
+        #     return {'CANCELLED'}
+
+        ## list surrounding blends
+        self.blend_list = [Path(i.path) for i in os.scandir(Path(bpy.data.filepath).parent) if i.is_file() and i.name.endswith('.blend')]
+        self.blend_list.sort(key=lambda x: x.name) # needed ?
+        wm = context.window_manager
+        wm.invoke_props_popup(self, event) # can't specify size... width=500, height=600 # bad register, need undo
+        # wm.invoke_props_dialog(self)
+        return {'FINISHED'}
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        for path in self.blend_list:
+            if path == Path(bpy.data.filepath):
+                row=col.row()
+                row.enabled=False
+                row.operator('wm.open_mainfile', text=path.name, emboss=False).filepath = str(path) # path.as_posix()
+            else:
+                row=col.row()
+                op = col.operator('wm.open_mainfile', text=path.name, emboss=False)
+                op.filepath = str(path)
+                op.load_ui = bpy.context.preferences.filepaths.use_load_ui
+                row.operator('wm.open_in_new_instance', text='', icon='FILE_BACKUP').filepath = str(path)
+
+            
+    def execute(self, context):
+        # bpy.ops.wm.open_mainfile(filepath=blend) # load_ui=True, use_scripts=True
+        return {'FINISHED'}
+
 class PATH_OT_open_browser(Operator):
     bl_idname = "path.open_browser"
     bl_label = "Open Path In Browser"
@@ -135,6 +237,9 @@ class PATH_OT_open_browser(Operator):
 classes = (
 PATH_OT_open_last_file,
 PATH_OT_search_open_history,
+PATH_OT_open_in_new_instance,
+PATH_OT_full_reopen,
+PATH_OT_open_side_blend,
 PATH_OT_open_browser,
 )
 
