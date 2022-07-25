@@ -121,14 +121,19 @@ def open_blend_new_instance(filepath=None):
         cmd[1] = str(filepath)
     else:
         cmd.insert(1, str(filepath))
-    print('cmd: ', cmd)
-    if sys.platform.lower().startswith('linux'):
-        subprocess.Popen(['gnome-terminal', '--'] + cmd) # check if env is passed
-    else:
-        subprocess.Popen(cmd) #, shell=True
-    ## potential flag for windows, need testing
-    # subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
 
+    print('cmd: ', cmd)
+    system = sys.platform.lower()
+    if system.startswith('linux'):
+        cmd = ['gnome-terminal', '--'] + cmd
+    elif system.startswith('darwin'):
+        cmd = ['open', '-W', '-a', 'Terminal.app'] + cmd
+    #elif system == 'Windows': # do not seem to be needed
+    #     cmd = ['start', '--']+ cmd
+
+    subprocess.Popen(cmd) #, shell=True
+    ## potential flag for windows, seem to work without
+    # subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
 
 class PATH_OT_open_in_new_instance(Operator) :
     bl_idname = "wm.open_in_new_instance"
@@ -182,9 +187,11 @@ class PATH_OT_open_side_blend(Operator) :
     def invoke(self, context, event):
         ## list surrounding blends
         self.blend_list = [Path(i.path) for i in os.scandir(Path(bpy.data.filepath).parent) if i.is_file() and i.name.endswith('.blend')]
-        if len(self.blend_list) < 2:
-            self.report({"WARNING"}, 'No other blend file in current blend location !')
-            return {'CANCELLED'}
+
+        ## Best to list the file even if solo (that way can open another instance quickly)
+        # if len(self.blend_list) < 2:
+        #     self.report({"WARNING"}, 'No other blend file in current blend location !')
+        #     return {'CANCELLED'}
 
         self.blend_list.sort(key=lambda x: x.name) # needed ?
         
