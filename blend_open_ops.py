@@ -5,6 +5,7 @@ from os.path import basename, dirname, join, exists
 from pathlib import Path
 import sys
 import subprocess
+import time
 from bpy.types import Operator
 from . import path_func
 
@@ -116,11 +117,15 @@ class PATH_OT_search_open_history(Operator) :
 
 def open_blend_new_instance(filepath=None):
     filepath = filepath or bpy.data.filepath
+    
     cmd = sys.argv
-    if len(cmd) > 1 and cmd[1].endswith('.blend'):
-        cmd[1] = str(filepath)
-    else:
-        cmd.insert(1, str(filepath))
+    
+    # if no filepath, use command as is to reopen blender
+    if filepath != '':
+        if len(cmd) > 1 and cmd[1].endswith('.blend'):
+            cmd[1] = str(filepath)
+        else:
+            cmd.insert(1, str(filepath))
 
     print('cmd: ', cmd)
     system = sys.platform.lower()
@@ -132,6 +137,7 @@ def open_blend_new_instance(filepath=None):
     #     cmd = ['start', '--']+ cmd
 
     subprocess.Popen(cmd) #, shell=True
+    
     ## potential flag for windows, seem to work without
     # subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
 
@@ -155,7 +161,8 @@ class PATH_OT_full_reopen(Operator) :
 
     @classmethod
     def poll(cls, context):
-        return bpy.data.is_saved
+        return True
+        return bpy.data.is_saved #only if file is saved?
 
     def invoke(self, context, event):
         if bpy.data.is_dirty and not event.ctrl:
@@ -171,6 +178,8 @@ class PATH_OT_full_reopen(Operator) :
         
     def execute(self, context):
         open_blend_new_instance()
+        # Delay to avoid quitting before subprocess is launched
+        time.sleep(0.1) # lower value ?
         bpy.ops.wm.quit_blender()
         return {'FINISHED'}
 

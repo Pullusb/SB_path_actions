@@ -5,12 +5,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [2.0.2] - 2022-09-07
+
+### Changed
+
+- Developper `reopen` button is also available when file is not saved to reopen blender
+
 ## [2.0.1] - 2022-07-25
 
 ### Changed
 
 - Pop list on`shit+click` even if there is only one blend in folder (allow to pop new instance quickly)
 - Add compatibility with Mac for new blender instance
+
 ## [2.0.0] - 2022-06-30
 
 ### Added
