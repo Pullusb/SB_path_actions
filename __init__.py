@@ -3,7 +3,7 @@
 bl_info = {
     "name": "Path Actions",
     "author": "Samuel Bernou",
-    "version": (2, 0, 2),
+    "version": (2, 0, 3),
     "blender": (2, 80, 0),
     "location": "Window top right corner, browser footer, addon prefs",
     "description": "Open blend folder in OS explorer",
@@ -15,6 +15,7 @@ bl_info = {
 from . import (
             operators,
             blend_open_ops,
+            extend_history,
             open_addons_path,
             panels,
             keymap)
@@ -163,6 +164,7 @@ class PATH_addon_preferences(bpy.types.AddonPreferences):
 
 
 def register():
+    extend_history.register()
     blend_open_ops.register()
     operators.register()
     open_addons_path.register()
@@ -177,6 +179,7 @@ def unregister():
     open_addons_path.unregister()
     operators.unregister()
     blend_open_ops.unregister()
+    extend_history.unregister()
     
 if __name__ == "__main__":
     register()

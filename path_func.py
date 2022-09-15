@@ -1,5 +1,5 @@
 import bpy
-from sys import platform
+import sys
 import subprocess
 from os.path import isfile, dirname, normpath
 from shutil import which
@@ -10,10 +10,9 @@ def openFolder(folderpath):
     with cmd relative to user's OS
     on window, select
     """
-    from sys import platform
     import subprocess
 
-    myOS = platform
+    myOS = sys.platform
     if myOS.startswith(('linux','freebsd')):
         cmd = 'xdg-open'
 
@@ -51,3 +50,29 @@ def openFolder(folderpath):
     # print('Opening command :', fullcmd)
     subprocess.Popen(fullcmd)
     return ' '.join(fullcmd)
+
+def open_blend_new_instance(filepath=None):
+    filepath = filepath or bpy.data.filepath
+    
+    cmd = sys.argv
+    
+    # if no filepath, use command as is to reopen blender
+    if filepath != '':
+        if len(cmd) > 1 and cmd[1].endswith('.blend'):
+            cmd[1] = str(filepath)
+        else:
+            cmd.insert(1, str(filepath))
+
+    print('cmd: ', cmd)
+    system = sys.platform.lower()
+    if system.startswith('linux'):
+        cmd = ['gnome-terminal', '--'] + cmd
+    elif system.startswith('darwin'):
+        cmd = ['open', '-W', '-a', 'Terminal.app'] + cmd
+    #elif system == 'Windows': # do not seem to be needed
+    #     cmd = ['start', '--']+ cmd
+
+    subprocess.Popen(cmd) #, shell=True
+    
+    ## potential flag for windows, seem to work without
+    # subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)

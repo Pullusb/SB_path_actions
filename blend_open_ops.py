@@ -1,9 +1,7 @@
-from ast import operator
 import bpy
 import os
 from os.path import basename, dirname, join, exists
 from pathlib import Path
-import sys
 import subprocess
 import time
 from bpy.types import Operator
@@ -68,7 +66,6 @@ def get_history_list(self, context):
     return [(i, basename(i), "") for i in blends]
     # return [(i.path, basename(i.path), "") for i in self.blends]
 
-
 class PATH_OT_search_open_history(Operator) :
     bl_idname = "path.open_from_history"
     bl_label = 'Open Blend From History'
@@ -95,6 +92,7 @@ class PATH_OT_search_open_history(Operator) :
 
     def invoke(self, context, event):
         self.history = join(bpy.utils.user_resource('CONFIG'), 'recent-files.txt')
+        # bpy.utils.user_resource('CONFIG', path='recent-files.txt')
         if not exists(self.history):
             self.report({'WARNING'}, 'No history file found')
             return {'CANCELLED'}
@@ -115,32 +113,6 @@ class PATH_OT_search_open_history(Operator) :
         wm.invoke_search_popup(self) # can't specify size... width=500, height=600
         return {'FINISHED'}
 
-def open_blend_new_instance(filepath=None):
-    filepath = filepath or bpy.data.filepath
-    
-    cmd = sys.argv
-    
-    # if no filepath, use command as is to reopen blender
-    if filepath != '':
-        if len(cmd) > 1 and cmd[1].endswith('.blend'):
-            cmd[1] = str(filepath)
-        else:
-            cmd.insert(1, str(filepath))
-
-    print('cmd: ', cmd)
-    system = sys.platform.lower()
-    if system.startswith('linux'):
-        cmd = ['gnome-terminal', '--'] + cmd
-    elif system.startswith('darwin'):
-        cmd = ['open', '-W', '-a', 'Terminal.app'] + cmd
-    #elif system == 'Windows': # do not seem to be needed
-    #     cmd = ['start', '--']+ cmd
-
-    subprocess.Popen(cmd) #, shell=True
-    
-    ## potential flag for windows, seem to work without
-    # subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
-
 class PATH_OT_open_in_new_instance(Operator) :
     bl_idname = "wm.open_in_new_instance"
     bl_label = 'Open Blend In New Instance'
@@ -150,7 +122,7 @@ class PATH_OT_open_in_new_instance(Operator) :
     filepath : bpy.props.StringProperty(default='', options={'SKIP_SAVE'})
 
     def execute(self, context):
-        open_blend_new_instance(self.filepath)
+        path_func.open_blend_new_instance(self.filepath)
         return {'FINISHED'}
 
 class PATH_OT_full_reopen(Operator) :
@@ -177,7 +149,7 @@ class PATH_OT_full_reopen(Operator) :
         col.label(text='(use Ctrl to bypass this prompt even if not saved)')
         
     def execute(self, context):
-        open_blend_new_instance()
+        path_func.open_blend_new_instance()
         # Delay to avoid quitting before subprocess is launched
         time.sleep(0.1) # lower value ?
         bpy.ops.wm.quit_blender()

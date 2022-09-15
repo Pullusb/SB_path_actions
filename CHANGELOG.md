@@ -5,6 +5,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [2.0.3] - 2022-09-11
+
+### Added
+
+- dump/load history to/from an extended_history text file stored in temp files.
+    - using from search `Dump File History` (path.dump_history) and `Restore File History` (path.restore_history)
+    - Specific usecases, like transfering history from a blender version to another (ex: open 3.2 > Dump > open 3.3 > Restore)
+
 ## [2.0.2] - 2022-09-07
 
 ### Changed
