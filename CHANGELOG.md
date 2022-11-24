@@ -5,6 +5,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [2.0.4] - 2022-11-24
+
+### Changed
+
+- Hide buttons in asset browser
+
 ## [2.0.3] - 2022-09-11
 
 ### Added

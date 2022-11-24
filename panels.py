@@ -54,9 +54,14 @@ class PATH_PT_top_filebrowser_ui(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
+        from bpy_extras.asset_utils import SpaceAssetInfo
+        if SpaceAssetInfo.is_asset_browser_poll(context):
+            return
         return context.region.alignment in {'LEFT', 'RIGHT'}
 
     def draw(self, context):
+        # if context.area.regions[2].type != 'UI':
+        #     return
         layout = self.layout
         layout.scale_x = 1.3
         layout.scale_y = 1.3
