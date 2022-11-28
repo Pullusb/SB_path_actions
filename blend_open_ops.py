@@ -1,5 +1,6 @@
 import bpy
 import os
+import re
 from os.path import basename, dirname, join, exists
 from pathlib import Path
 import subprocess
@@ -173,8 +174,12 @@ class PATH_OT_open_side_blend(Operator) :
         # if len(self.blend_list) < 2:
         #     self.report({"WARNING"}, 'No other blend file in current blend location !')
         #     return {'CANCELLED'}
-
-        self.blend_list.sort(key=lambda x: x.name) # needed ?
+        
+        natural_sort = lambda x: [int(t) if t.isdigit() else t.lower() for t in re.split('(\d+)', x.name)]
+        try:
+            self.blend_list.sort(key=natural_sort)
+        except Exception:
+            self.blend_list.sort(key=lambda x: x.name)
         
         wm = context.window_manager
         ## using a 'props_popup' crashes blender (using dialog add an OK button...but works)
@@ -189,17 +194,21 @@ class PATH_OT_open_side_blend(Operator) :
             if path == Path(bpy.data.filepath):
                 mainrow=col.row()
                 subrow = mainrow.row()
+                subrow.alignment = 'LEFT'
                 subrow.enabled=False
                 subrow.operator('wm.open_mainfile', text=path.name, emboss=False).filepath = str(path) # path.as_posix()
-                row = mainrow.row()
             else:
-                row=col.row()
-                row.operator_context = "EXEC_AREA"# , (should be "INVOKE_AREA" if file was not saved)
-                op = row.operator('wm.open_mainfile', text=path.name, emboss=False)
+                mainrow=col.row()
+                subrow = mainrow.row()
+                subrow.alignment = 'LEFT'
+                subrow.operator_context = "EXEC_AREA"# , (should be "INVOKE_AREA" if file was not saved)
+                op = subrow.operator('wm.open_mainfile', text=path.name, emboss=False)
                 op.load_ui = context.preferences.filepaths.use_load_ui
                 op.filepath = str(path)
-                # row.operator('wm.open_mainfile', text=path.name, emboss=False).filepath = str(path)
+                # subrow.operator('wm.open_mainfile', text=path.name, emboss=False).filepath = str(path)
             
+            row = mainrow.row()
+            row.alignment = 'RIGHT'
             row.operator('wm.open_in_new_instance', text='', icon='FILE_BACKUP').filepath = str(path)
 
     def execute(self, context):
