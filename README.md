@@ -32,6 +32,8 @@ Alternative functions to _Open folder_ button, instead of opening:
 - combine with `Ctrl + Shift` to copy _path to directory_ 
 - combine with `Alt` to copy _file name_
 
+## Open side blend
+
 `Shift + Clic` open a new menu to open files that are in same folder as the current blend:
   - click on blend names to open "in place"
   - click on right icon to open in a new instance of blender
@@ -39,8 +41,9 @@ Alternative functions to _Open folder_ button, instead of opening:
 
 ![Open side blend](https://github.com/Pullusb/images_repo/blob/master/PA_v2_open_side_blend.png)
 
-Check _Developer mode_ in preferences to add a button on upper right corner to close and reopen blender with current blend (`Ctrl + Clic` on the button reopen without unsaved warning)
+## Developer mode: full reload button
 
+Check _Developer mode_ in preferences to add a button on upper right corner to close and reopen blender with current blend (`Ctrl + Clic` on the button reopen without unsaved warning)
 
 ![Dev mode](https://github.com/Pullusb/images_repo/blob/master/PA_v2_dev_fullreload.png)
 
@@ -57,7 +60,7 @@ Add 2 buttons in the footer of the file browser:
 <!-- ![Browser](https://github.com/Pullusb/images_repo/blob/master/Bl_PathAction_Browser28.png) -->
   
 
-## operators in search menu
+## Operators in search menu
 
 Also add two Operators accessible through search (F3 since 2.8)  
 Note: only if you have developper extras enabled in preferences > interface
@@ -77,7 +80,7 @@ Note: only if you have developper extras enabled in preferences > interface
 ![prefs](https://github.com/Pullusb/images_repo/blob/master/PA_v2_prefs.png)
 
 
-## Shortcut to search in recent history
+## Shortcut: search in recent history
 
 Add Shortcut : `Ctrl + Alt+ Shift + O` pop up a search in recent history to quickly find a previous to open.
 
