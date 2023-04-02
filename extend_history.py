@@ -44,10 +44,13 @@ class PATH_OT_dump_history(Operator) :
         
         new_history = blends + all_blends
         
+        # add trailing return
+        new_history = [f'{path_str.strip()}\n' for path_str in new_history]
+
         with ext_history.open('w') as fd:
             fd.writelines(new_history)
         
-        self.report({'INFO'}, f'Updated')
+        self.report({'INFO'}, f'History dumped: {ext_history}')
         return {'FINISHED'}
 
 class PATH_OT_restore_history(Operator) :
