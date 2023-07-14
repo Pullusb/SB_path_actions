@@ -15,10 +15,16 @@ def get_addon_location(fp) -> str:
     if fp.startswith( str(Path(bpy.utils.resource_path('LOCAL')) / 'scripts' / 'addons') ):
         return 'native'
 
-    external_scripts = bpy.context.preferences.filepaths.script_directory
-    if external_scripts:
-        if fp.startswith( str(Path(external_scripts)) ):
-            return 'external'
+    if bpy.app.version < (3, 6, 0):
+        external_scripts = bpy.context.preferences.filepaths.script_directory
+        if external_scripts:
+            if fp.startswith( str(Path(external_scripts)) ):
+                return 'external'
+    else:
+        external_scripts = bpy.context.preferences.filepaths.script_directories
+        for s in external_scripts:
+            if s.directory and fp.startswith( str(Path(s.directory)) ):
+                return 'external'
 
     return 'other'
 

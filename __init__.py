@@ -3,7 +3,7 @@
 bl_info = {
     "name": "Path Actions",
     "author": "Samuel Bernou",
-    "version": (2, 0, 6),
+    "version": (2, 0, 7),
     "blender": (2, 80, 0),
     "location": "Window top right corner, browser footer, addon prefs",
     "description": "Open blend folder in OS explorer",
@@ -105,9 +105,17 @@ class PATH_addon_preferences(bpy.types.AddonPreferences):
 
         # external scripts (if specified)
         preferences = bpy.context.preferences
-        external_scripts = preferences.filepaths.script_directory
-        if external_scripts and len(external_scripts) > 2:
-            row.operator("wm.path_open", text='External Addons').filepath = str(Path(external_scripts))
+        if bpy.app.version < (3, 6, 0):
+            external_scripts = preferences.filepaths.script_directory
+            if external_scripts and len(external_scripts) > 2:
+                row.operator("wm.path_open", text='External Addons').filepath = str(Path(external_scripts))
+        else:
+            if len(preferences.filepaths.script_directories):
+                row = box.row()
+                row.label(text='Script directories:', icon='FILE_FOLDER')
+                for s in preferences.filepaths.script_directories:
+                    if s.directory:
+                        row.operator("wm.path_open", text=s.name).filepath = str(Path(s.directory))
 
         ## Config folder
         box.separator()
