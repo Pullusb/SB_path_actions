@@ -55,15 +55,20 @@ def open_blend_new_instance(filepath=None):
     filepath = filepath or bpy.data.filepath
     
     cmd = sys.argv
-    
-    # if no filepath, use command as is to reopen blender
+
+    # If no filepath, use command as is to reopen blender
     if filepath != '':
-        if len(cmd) > 1 and cmd[1].endswith('.blend'):
-            cmd[1] = str(filepath)
+        ## Sometimes filepath is not directly second argument
+        if len(cmd) > 1 and next((arg for arg in cmd[1:] if arg.endswith('.blend')), None):
+            # Iterate and replace first occurence with current blend
+            for i in range(1, len(cmd)):
+                if cmd[i].endswith('.blend'):
+                    cmd[i] = str(filepath)
+                    break
         else:
             cmd.insert(1, str(filepath))
 
-    print('cmd: ', cmd)
+    # print('cmd: ', cmd)
     system = sys.platform.lower()
     if system.startswith('linux'):
         cmd = ['gnome-terminal', '--'] + cmd
