@@ -3,9 +3,9 @@
 bl_info = {
     "name": "Path Actions",
     "author": "Samuel Bernou",
-    "version": (2, 0, 8),
-    "blender": (2, 80, 0),
-    "location": "Window top right corner, browser footer, addon prefs",
+    "version": (2, 0, 9),
+    "blender": (3, 0, 0),
+    "location": "Window top right corner, browser up-left corner, addon prefs",
     "description": "Open blend folder in OS explorer",
     "warning": "",
     "doc_url": "https://github.com/Pullusb/SB_path_actions",
