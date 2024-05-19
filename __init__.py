@@ -4,7 +4,7 @@ bl_info = {
     "name": "Path Actions",
     "author": "Samuel Bernou",
     "version": (2, 0, 9),
-    "blender": (3, 0, 0),
+    "blender": (4, 0, 2),
     "location": "Window top right corner, browser up-left corner, addon prefs",
     "description": "Open blend folder in OS explorer",
     "warning": "",
@@ -37,7 +37,7 @@ def get_hotkey_entry_item(km, kmi_name, kmi_value, properties):
 
 class PATH_addon_preferences(bpy.types.AddonPreferences):
     """ Preference Settings Addon Panel"""
-    bl_idname = __name__.split('.')[0] # __name__
+    bl_idname = __package__
     bl_label = "Addon Preferences"
 
     # show_addon_loc_details : bpy.props.BoolProperty(name='All Addons load folders', default=False)

@@ -6,10 +6,7 @@ import os
 #else add in the top lower bar : TOPBAR_HT_lower_bar
 
 def get_addon_prefs():
-    addon_name = os.path.splitext(__name__)[0]
-    preferences = bpy.context.preferences
-    addon_prefs = preferences.addons[addon_name].preferences
-    return addon_prefs
+    return bpy.context.preferences.addons[__package__].preferences
 
 def TopBarOpenButton(self, context):
     layout = self.layout
