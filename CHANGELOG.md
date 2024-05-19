@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - blender Manifest toml file to submit as Blender extension
+- replace preference access with new `__package__` name
 
 ## [2.0.8] - 2024-03-27
 
