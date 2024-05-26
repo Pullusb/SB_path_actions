@@ -10,17 +10,15 @@ from . import path_func
 
 
 ### Open Last file
-
 def open_last_recent_file():
     '''opent the last file (last)'''
-
-    history = join(bpy.utils.user_resource('CONFIG'), 'recent-files.txt')
-    if exists(history):
+    history = Path(bpy.utils.user_resource('CONFIG')) / 'recent-files.txt'
+    if history.exists():
         try:
-            with open(history, 'r') as f:
-                last_file = f.readline().strip()#read first line of history txt file
+            # with open(history, 'r') as f:
+            with history.open('r') as fd:
+                last_file = fd.readline().strip() # read first line of history txt file
             if last_file:
-                #print ('last_file:', last_file)#D
                 bpy.ops.wm.open_mainfile(filepath=last_file, load_ui=True, use_scripts=True)
             else:
                 return (1, 'error with recent-file.txt, may be empty : ' + history)
@@ -29,7 +27,7 @@ def open_last_recent_file():
 
     else:
         return (1, 'error, "recent-file.txt" not found')
-    return (0, '')#os.path.basename(last_file) + ' opened'
+    return (0, '')
 
 
 class PATH_OT_open_last_file(Operator):
@@ -43,10 +41,6 @@ class PATH_OT_open_last_file(Operator):
         return True
 
     def execute(self, context):
-        ## Verification step (may integrate later)
-        #if bpy.data.is_saved:#if file has been saved
-        #    if not bpy.data.is_dirty:#if file as not unsaved modification
-        #        error, mess = open_last_recent_file()
         error, mess = open_last_recent_file()
         if error:
             self.report({'ERROR'}, mess)
@@ -59,51 +53,51 @@ class PATH_OT_open_last_file(Operator):
 
 def get_history_list(self, context):
     '''return (identifier, name, description) of enum content'''
+    # blends = []
+    # with open(self.history, 'r') as fd:
+    #     blends = [line.strip() for line in fd]
+    # if not blends:
+    #     return [("", "", "")]
+    # return [(i, basename(i), "") for i in blends]
     try:
         with open(self.history, 'r') as fd:
             blends = [line.strip() for line in fd]
     except:
         return [("", "", "")]
     return [(i, basename(i), "") for i in blends]
-    # return [(i.path, basename(i.path), "") for i in self.blends]
 
 class PATH_OT_search_open_history(Operator) :
     bl_idname = "path.open_from_history"
     bl_label = 'Open Blend From History'
     # important to have the updated enum here as bl_property
     bl_property = "blend_files_enum"
-
-
-    blend_files_enum : bpy.props.EnumProperty(
-        name="Blends",
-        description="Take the blend",
-        items=get_history_list
-        )
     
     # There is a known bug with using a callback,
     # Python must keep a reference to the strings returned by the callback
     # or Blender will misbehave or even crash.
-
     history : bpy.props.StringProperty(default='', options={'SKIP_SAVE'}) # need to have a variable to store (to get it in self)
 
-    def execute(self, context):
-        blend = self.blend_files_enum
-        bpy.ops.wm.open_mainfile(filepath=blend) # load_ui=True, use_scripts=True
-        return {'FINISHED'}
+    blend_files_enum : bpy.props.EnumProperty(
+        name="Blends",
+        description="Take the blend",
+        items=get_history_list,
+        options={'HIDDEN'},
+        )
 
     def invoke(self, context, event):
-        self.history = join(bpy.utils.user_resource('CONFIG'), 'recent-files.txt')
-        # bpy.utils.user_resource('CONFIG', path='recent-files.txt')
-        if not exists(self.history):
+        history = Path(bpy.utils.user_resource('CONFIG')) / 'recent-files.txt'
+        if not history.exists():
             self.report({'WARNING'}, 'No history file found')
             return {'CANCELLED'}
 
+        self.history = str(history)
+
         blends = []
         try:
-            with open(self.history, 'r') as fd:
+            with history.open('r') as fd:
                 blends = [fd.readline().strip() for line in fd]
         except:
-            self.report({'ERROR'}, f'error accessing recent-file.txt : {self.history}')
+            self.report({'ERROR'}, f'Error accessing recent-file.txt : {self.history}')
             return {'CANCELLED'}
 
         if not blends:
@@ -111,8 +105,14 @@ class PATH_OT_search_open_history(Operator) :
             return {'CANCELLED'}
 
         wm = context.window_manager
-        wm.invoke_search_popup(self) # can't specify size... width=500, height=600
+        wm.invoke_search_popup(self)
         return {'FINISHED'}
+
+    def execute(self, context):
+        blend = self.blend_files_enum
+        bpy.ops.wm.open_mainfile(filepath=blend)
+        return {'FINISHED'}
+
 
 class PATH_OT_open_in_new_instance(Operator) :
     bl_idname = "wm.open_in_new_instance"

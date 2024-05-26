@@ -5,6 +5,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [2.0.10] - 2024-05-24
+
+### Changed
+
+- some code now use Pathlib
+
+
 ## [2.0.9] - 2024-05-18
 
 ### Added

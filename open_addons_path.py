@@ -75,9 +75,7 @@ def get_addons_modules_infos(filter="ALL"):
 
 def get_addon_list(self, context):
     '''return (identifier, name, description) of enum content'''
-    return get_addons_modules_infos() # self.all_addons_l
-    # return [(i.path, basename(i.path), "") for i in self.blends]
-
+    return get_addons_modules_infos()
 
 class PATH_OT_search_open_addon_path(Operator) :
     bl_idname = "path.open_addon_directory"
@@ -108,7 +106,7 @@ class PATH_OT_search_open_addon_path(Operator) :
     def invoke(self, context, event):
         all_addons_l = get_addons_modules_infos()
         wm = context.window_manager
-        wm.invoke_search_popup(self) # can't specify size... width=500, height=600
+        wm.invoke_search_popup(self)
         return {'FINISHED'}
 
 classes = (
