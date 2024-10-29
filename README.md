@@ -2,17 +2,22 @@
 
 Add buttons in Blender UI to open directory of blend file or output path in the OS explorer.
 
-Get it on:
+### Since Blender 4.2, Path actions can be installed from the extension platform
+
+**[Extension platform page](https://extensions.blender.org/add-ons/sb-path-actions/)**
+
+**[Download latest development version](https://github.com/Pullusb/SB_path_actions/archive/refs/heads/master.zip)** from this repository (usually same as extension platform)
+
+**[Demo Youtube](https://www.youtube.com/watch?v=MUz2RAfHA3I)**
+
+For previous version, get it on:
 
 **[Blender Market](https://blendermarket.com/products/path-actions)**
 
 **[Gumroad](https://pullusb.gumroad.com/l/path_actions)**
 
-**[Download latest from this repository](https://github.com/Pullusb/SB_path_actions/archive/refs/heads/master.zip)**
 
-**[Demo Youtube](https://www.youtube.com/watch?v=MUz2RAfHA3I)**
-
-For old blender 2.7 version go [here](https://github.com/Pullusb/SB_blender_addons_old_2_7)
+For old blender 2.7 version, go [here](https://github.com/Pullusb/SB_blender_addons_old_2_7)
   
 --------
 
