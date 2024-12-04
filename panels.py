@@ -14,7 +14,7 @@ def TopBarOpenButton(self, context):
     if region.alignment == 'RIGHT':
         if get_addon_prefs().dev_mode:
             layout.operator("wm.full_reopen", text = "", icon = 'FILE_REFRESH')
-        layout.operator("path.open_blend", text = "", icon = 'FILE_FOLDER')
+        layout.operator("wm.open_blend_folder", text = "", icon = 'FILE_FOLDER')
 
 ### File browser
 

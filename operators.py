@@ -29,7 +29,7 @@ class PATH_OT_open_filepath_folder(Operator):
 
 class PATH_OT_open_blend_folder(Operator):
     """Open blend's directory in OS explorer\nCtrl: Copy full data path\nCtrl+Shift: Copy path to directory\nAlt: Copy file name\nShift: Open a side blend"""
-    bl_idname = "path.open_blend"
+    bl_idname = "wm.open_blend_folder"
     bl_label = "Open blend folder"
     bl_options = {'REGISTER'}
 
