@@ -235,6 +235,95 @@ class PATH_OT_open_browser(Operator):
         self.report({'INFO'}, f'Open: {self.filepath}')
         return {"FINISHED"}
 
+""" # unused yet - same as copy_blend_path from operator.py but for generic paths
+class PATH_OT_copy_chosen_path(bpy.types.Operator):
+    bl_idname = "path.copy_chosen_path"
+    bl_label = "Copy Chosen Path"
+    bl_description = "Copy chosen path in a list of proposed alternative"
+    bl_options = {"REGISTER", "INTERNAL"}
+    
+    path : bpy.props.StringProperty(options={'SKIP_SAVE'})
+
+    quote_style : bpy.props.EnumProperty(
+        name="Quote Style",
+        description="Choose the quote style",
+        items=(
+            ('PLAIN', "Plain", "No quotes", 0),
+            ('DOUBLE', "Double Quote", 'Wrap with "', 1),
+            ('SINGLE', "Single Quote", "Wrap with '", 2),
+            ('BACK', "Back Quote", "Wrap with `", 3)
+        ),
+        default='PLAIN',
+        # options={'SKIP_SAVE'}
+    )
+
+    def invoke(self, context, event):
+        if not self.path:
+            return {"CANCELLED"}
+        self.pathes = []
+
+        try:
+            path_obj = Path(self.path)
+            absolute = Path(os.path.abspath(bpy.path.abspath(self.path)))
+            resolved = Path(bpy.path.abspath(self.path)).resolve()
+        except:
+            # case of invalid / non-accessable path
+            bpy.context.window_manager.clipboard = self.path
+            self.report({'INFO'}, f'Copied: {self.path}')
+            return self.execute(context)
+
+        self.pathes.append(('Path', self.path))
+        self.pathes.append(('Parent', dirname(self.path)))
+
+        ## Show absolute path if different
+        if absolute != path_obj:        
+            self.pathes.append(('Absolute', str(absolute)))
+            self.pathes.append(('Absolute Parent', str(absolute.parent)))
+
+        ## Show resolved path if different
+        if absolute != resolved:
+            self.pathes.append(('Resolved', str(resolved)))
+            self.pathes.append(('Absolute Parent', str(resolved.parent)))
+
+        self.pathes.append(('File Name', path_obj.name))
+        self.pathes.append(('File Stem', path_obj.stem))
+
+        maxlen = max(len(l[1]) for l in self.pathes)
+        popup_width = 800 
+        if maxlen < 50:
+            popup_width = 500
+        elif maxlen > 100:
+            popup_width = 1000
+        return context.window_manager.invoke_props_dialog(self, width=popup_width)
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = False
+
+        # with align True, path are probably too close visually
+        col = layout.column(align=False)
+        row = col.row()
+        # row.use_property_split = False # <- only on row
+        row.prop(self, 'quote_style', text='Quote Style', expand=True)
+
+        col.separator()
+
+        for action_name, filepath in self.pathes:
+
+            if self.quote_style == 'DOUBLE':
+                filepath = f'"{filepath}"'
+            elif self.quote_style == 'SINGLE':
+                filepath = f"'{filepath}'"
+            elif self.quote_style == 'BACK':
+                filepath = f"`{filepath}`"
+
+            split=col.split(factor=0.2, align=True)
+            split.operator('gp.copy_string_to_clipboard', text=action_name, icon='COPYDOWN').string = filepath
+            split.label(text=filepath)
+
+    def execute(self, context):
+        return {"FINISHED"}
+"""
 
 classes = (
 PATH_OT_open_last_file,

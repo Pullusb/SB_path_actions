@@ -5,6 +5,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+2.1.0
+
+## [2.1.0] - 2024-12-06
+
+### Added
+
+- "Copy chosen blend path" with Ctrl + Click on folder icon. Popup series of path versions to copy. Replace the old shortcuts that were hard to remember
+- More copy otions. possibility to copy absolute or resolved path if different from native path. possible to quote the path to copy with multiple quote style.
+
+### Removed
+
+- Shortcut `Ctrl + Shift` and `Alt` on folder buttons. Now all those options (and more) exists on `Ctrl + Clic` popup
+
+
 ## [2.0.12] - 2024-12-04
 
 ### Changed

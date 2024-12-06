@@ -20,15 +20,14 @@ def TopBarOpenButton(self, context):
 
 def BrowserPathActionsButtons(self, context):
     layout = self.layout
-    #split = layout.split()
     row = layout.row(align=True)
     if bpy.data.filepath:
-        #button to paste blend path in blender filebrowser's path (file must be saved for the button to appear)
+        # button to paste blend path in blender filebrowser's path (file must be saved for the button to appear)
         row.operator(
-            "path.paste_path",
+            "path.browser_to_blend_folder",
             text="Blend Location",
-            icon="FILE_BACKUP")#BLENDER#APPEND_BLEND (paperclip in 2.8)
-    #button to open current filepath destination in OS browser
+            icon="FILE_BACKUP")
+    # button to open current filepath destination in OS browser
     row.operator(
         "path.open_filepath",
         text="Open Folder",
@@ -66,7 +65,7 @@ class PATH_PT_top_filebrowser_ui(bpy.types.Panel):
         row = layout.row(align=True)
         if bpy.data.filepath:
             row.operator(
-                'path.paste_path', text='Blend Location',
+                'path.browser_to_blend_folder', text='Blend Location',
                 icon="FILE_BACKUP") # DESKTOP
         
         row.operator(
@@ -80,7 +79,7 @@ class PATH_PT_top_filebrowser_ui(bpy.types.Panel):
         subsubrow = subrow.row(align=True)
         if bpy.data.filepath:
             subsubrow.operator(
-                'path.paste_path', text='Blend Location',
+                'path.browser_to_blend_folder', text='Blend Location',
                 icon="FILE_BACKUP") # DESKTOP
         
         subsubrow.operator(
