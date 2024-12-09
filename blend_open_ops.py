@@ -318,7 +318,7 @@ class PATH_OT_copy_chosen_path(bpy.types.Operator):
                 filepath = f"`{filepath}`"
 
             split=col.split(factor=0.2, align=True)
-            split.operator('gp.copy_string_to_clipboard', text=action_name, icon='COPYDOWN').string = filepath
+            split.operator('path.copy_string_to_clipboard', text=action_name, icon='COPYDOWN').string = filepath
             split.label(text=filepath)
 
     def execute(self, context):

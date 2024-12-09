@@ -7,7 +7,7 @@ from os.path import dirname, basename, realpath, split, exists
 from .path_func import openFolder
 
 class PATH_OT_copy_string_to_clipboard(bpy.types.Operator):
-    bl_idname = "gp.copy_string_to_clipboard"
+    bl_idname = "path.copy_string_to_clipboard"
     bl_label = "Copy String"
     bl_description = "Copy passed string to clipboard"
     bl_options = {"REGISTER", "INTERNAL"}
@@ -100,7 +100,7 @@ class PATH_OT_copy_blend_path(bpy.types.Operator):
                 filepath = f"`{filepath}`"
 
             split=col.split(factor=0.2, align=True)
-            split.operator('gp.copy_string_to_clipboard', text=action_name, icon='COPYDOWN').string = filepath
+            split.operator('path.copy_string_to_clipboard', text=action_name, icon='COPYDOWN').string = filepath
             split.label(text=filepath)
 
     def execute(self, context):
@@ -132,7 +132,7 @@ class PATH_OT_open_blend_folder(Operator):
     bl_idname = "wm.open_blend_folder"
     bl_label = "Open blend folder"
     bl_description = "Open blend's directory in OS explorer\
-        \nCtrl: Pop-up 'copy path to blend' panel with choices\
+        \nCtrl: Copy path to blend\
         \nShift: Open a side blend"
     bl_options = {'REGISTER'}
 
