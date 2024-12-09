@@ -6,8 +6,8 @@ from os.path import dirname, basename, realpath, split, exists
 
 from .path_func import openFolder
 
-class PATH_OT_copy_string_to_clipboard(bpy.types.Operator):
-    bl_idname = "path.copy_string_to_clipboard"
+class PATHACTION_OT_copy_string_to_clipboard(bpy.types.Operator):
+    bl_idname = "pathaction.copy_string_to_clipboard"
     bl_label = "Copy String"
     bl_description = "Copy passed string to clipboard"
     bl_options = {"REGISTER", "INTERNAL"}
@@ -100,7 +100,7 @@ class PATH_OT_copy_blend_path(bpy.types.Operator):
                 filepath = f"`{filepath}`"
 
             split=col.split(factor=0.2, align=True)
-            split.operator('path.copy_string_to_clipboard', text=action_name, icon='COPYDOWN').string = filepath
+            split.operator('pathaction.copy_string_to_clipboard', text=action_name, icon='COPYDOWN').string = filepath
             split.label(text=filepath)
 
     def execute(self, context):
@@ -225,7 +225,7 @@ class PATH_OT_switch_path_operator(Operator):
 
 
 classes = (
-    PATH_OT_copy_string_to_clipboard,
+    PATHACTION_OT_copy_string_to_clipboard,
     PATH_OT_copy_blend_path,
     PATH_OT_switch_path_operator,
     PATH_OT_open_output_folder,
