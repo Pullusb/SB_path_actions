@@ -160,14 +160,17 @@ class PATH_OT_open_blend_folder(Operator):
         \nAlt: Open blend app locations"
     bl_options = {'REGISTER'}
 
-    @classmethod
-    def poll(cls, context):
-        return bpy.data.is_saved
+    # @classmethod
+    # def poll(cls, context):
+    #     return bpy.data.is_saved
 
     def invoke(self, context, event):
         self.ctrl = event.ctrl
         self.alt = event.alt
         self.shift = event.shift
+        if not bpy.data.is_saved and not (self.alt and not self.ctrl and not self.shift):
+            self.report({'ERROR'}, "Blend not saved: No folder to open or copy")
+            return {'CANCELLED'}
         return self.execute(context)
 
     def execute(self, context):
