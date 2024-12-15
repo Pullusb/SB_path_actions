@@ -1,5 +1,4 @@
 import bpy
-import os
 
 ### Topbar
 # add a button on top bar : TOPBAR_HT_upper_bar (there is a def draw_left and a def draw_right )

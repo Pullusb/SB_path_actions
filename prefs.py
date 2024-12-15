@@ -1,6 +1,7 @@
 import bpy
 import rna_keymap_ui
 from pathlib import Path
+import tempfile
 from . import open_addons_path
 # import addon_utils
 
@@ -16,6 +17,7 @@ def get_hotkey_entry_item(km, kmi_name, kmi_value, properties):
 def blender_locations(layout):
     ### Addons
     # col.use_property_split = True
+    layout.label(text='Browse Blender Folders', icon='FILE_FOLDER')
     col = layout.column(align=False)
 
     ## Config folder
@@ -24,17 +26,17 @@ def blender_locations(layout):
 
     config_folder = bpy.utils.user_resource('CONFIG')
     row = col.row(align=True)
-    row.operator("wm.path_open", text='Config Folder', icon='FILE_FOLDER').filepath = config_folder
-    row.operator("pathaction.copy_string_to_clipboard", text="", icon='COPYDOWN').string = config_folder
+    row.operator("wm.path_open", text='Config').filepath = config_folder
+    row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = config_folder
 
     bin_path = Path(bpy.app.binary_path)
     app_folder = str(bin_path.parent)
     row = col.row(align=True)
-    row.operator("wm.path_open", text='Application Folder', icon='FILE_FOLDER').filepath = app_folder
-    row.operator("pathaction.copy_string_to_clipboard", text="", icon='COPYDOWN').string = app_folder
+    row.operator("wm.path_open", text='Blender App Folder').filepath = app_folder
+    row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = app_folder
 
     row = col.row(align=True)
-    row.operator("pathaction.copy_string_to_clipboard", text="Copy Blender Exec Path", icon='COPYDOWN').string = str(bin_path)
+    row.operator("pathaction.copy_text_to_clipboard", text="Copy Blender Executable Path", icon='COPYDOWN').text = str(bin_path)
 
     col.separator()
 
@@ -43,22 +45,22 @@ def blender_locations(layout):
     if bpy.app.version >= (4, 2, 0):
         extension_dir = str(Path(bpy.utils.user_resource('EXTENSIONS')))
         row = col.row(align=True)
-        row.operator("wm.path_open", text='Extensions', icon='FILE_FOLDER').filepath = extension_dir
-        row.operator("pathaction.copy_string_to_clipboard", text="", icon='COPYDOWN').string = extension_dir
+        row.operator("wm.path_open", text='Extensions').filepath = extension_dir
+        row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = extension_dir
 
 
     user_scripts = str(Path(bpy.utils.user_resource('SCRIPTS')))
     row = col.row(align=True)
     # Local user addon source (usually appdata/.config folders). Where it goes when 'install from file'
-    row.operator("wm.path_open", text='User Scripts', icon='FILE_FOLDER').filepath = user_scripts
-    row.operator("pathaction.copy_string_to_clipboard", text="", icon='COPYDOWN').string = user_scripts
+    row.operator("wm.path_open", text='User Scripts').filepath = user_scripts
+    row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = user_scripts
     
     # local default installed addons (release)
 
     native_scripts = str(Path(bpy.utils.resource_path('LOCAL')) / 'scripts')
     row = col.row(align=True)
-    row.operator("wm.path_open", text='Native Scripts', icon='FILE_FOLDER').filepath = native_scripts
-    row.operator("pathaction.copy_string_to_clipboard", text="", icon='COPYDOWN').string = native_scripts
+    row.operator("wm.path_open", text='Native Scripts').filepath = native_scripts
+    row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = native_scripts
 
     # external scripts (if specified)
     preferences = bpy.context.preferences
@@ -68,53 +70,32 @@ def blender_locations(layout):
             extern_script = str(Path(external_scripts))
             row = col.row(align=True)
             row.operator("wm.path_open", text='External Addons').filepath = extern_script
-            row.operator("pathaction.copy_string_to_clipboard", text="", icon='COPYDOWN').string = extern_script
+            row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = extern_script
     else:
         if len(preferences.filepaths.script_directories):
             col.label(text='Other Script Directories:')
             for s in preferences.filepaths.script_directories:
                 if s.directory:
                     row = col.row(align=True)
-                    row.operator("wm.path_open", text=s.name, icon='FILE_FOLDER').filepath = str(Path(s.directory))
-                    row.operator("pathaction.copy_string_to_clipboard", text="", icon='COPYDOWN').string = str(Path(s.directory))
-
-
-""" # old multi row UI (might be better for preferences)
-def blender_locations(layout):
-    row = layout.row()
-    
-    ### Addons
-    row.label(text='Addons:')
-    row = layout.row()
-    row.label(text='Open: ', icon='FILE_FOLDER')
-    # Local user addon source (usually appdata/.config folders). Where it goes when 'install from file'
-    row.operator("wm.path_open", text='User Addons').filepath = str(Path(bpy.utils.user_resource('SCRIPTS')) / 'addons')
-    # local default installed addons (release)
-    row.operator("wm.path_open", text='Native Addons').filepath = str(Path(bpy.utils.resource_path('LOCAL')) / 'scripts' / 'addons')
-
-    # external scripts (if specified)
-    preferences = bpy.context.preferences
-    if bpy.app.version < (3, 6, 0):
-        external_scripts = preferences.filepaths.script_directory
-        if external_scripts and len(external_scripts) > 2:
-            row.operator("wm.path_open", text='External Addons').filepath = str(Path(external_scripts))
-    else:
-        if len(preferences.filepaths.script_directories):
-            row = layout.row()
-            row.label(text='Script directories:', icon='FILE_FOLDER')
-            for s in preferences.filepaths.script_directories:
-                if s.directory:
                     row.operator("wm.path_open", text=s.name).filepath = str(Path(s.directory))
+                    row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = str(Path(s.directory))
 
-    ## Config folder
-    layout.separator()
-    row = layout.row()
-    row.label(text='Application:')
-    row = layout.row()
-    row.label(text='Open: ', icon='FILE_FOLDER')
-    row.operator("wm.path_open", text='Config Folder').filepath = bpy.utils.user_resource('CONFIG')
-    row.operator("wm.path_open", text='Application Folder').filepath = str(Path(bpy.app.binary_path).parent)
-"""
+    if not bpy.context.preferences.addons[__package__].preferences.dev_mode:
+        return
+
+    col.separator()
+    col.label(text='Dev Extras:')
+    temp_dir = tempfile.gettempdir()
+    row = col.row(align=True)
+    row.operator("wm.path_open", text='Temp Directory').filepath = temp_dir
+    row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = temp_dir
+    
+    ## Temp directory of current session (not really useful)
+    # session_temp_dir = bpy.app.tempdir
+    # row = col.row(align=True)
+    # row.operator("wm.path_open", text='Session Temp Directory').filepath = session_temp_dir
+    # row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = session_temp_dir
+
 
 class PATH_addon_preferences(bpy.types.AddonPreferences):
     """ Preference Settings Addon Panel"""

@@ -24,19 +24,22 @@ class PATHACTION_PT_blend_location_ui(Panel):
         # if bpy.context.preferences.addons[__package__].preferences.dev_mode:
         layout.operator("path.open_addon_directory", text='Single Addon Directory', icon='VIEWZOOM') # PLUGIN
 
-class PATHACTION_OT_copy_string_to_clipboard(Operator):
-    bl_idname = "pathaction.copy_string_to_clipboard"
+class PATHACTION_OT_copy_text_to_clipboard(Operator):
+    bl_idname = "pathaction.copy_text_to_clipboard"
     bl_label = "Copy String"
     bl_description = "Copy passed string to clipboard"
     bl_options = {"REGISTER", "INTERNAL"}
+
+    text : bpy.props.StringProperty(options={'SKIP_SAVE'})
     
-    string : bpy.props.StringProperty(options={'SKIP_SAVE'})
+    report_info : bpy.props.BoolProperty(name="Report Info", default=True)
     
     def execute(self, context):
-        if not self.string:
+        if not self.text:
             return {"CANCELLED"}
-        bpy.context.window_manager.clipboard = self.string
-        self.report({'INFO'}, f'Copied: {self.string}')
+        bpy.context.window_manager.clipboard = self.text
+        if self.report_info:
+            self.report({'INFO'}, f'Copied: {self.text}')
         return {"FINISHED"}
 
 class PATH_OT_copy_blend_path(Operator):
@@ -118,7 +121,7 @@ class PATH_OT_copy_blend_path(Operator):
                 filepath = f"`{filepath}`"
 
             split=col.split(factor=0.2, align=True)
-            split.operator('pathaction.copy_string_to_clipboard', text=action_name, icon='COPYDOWN').string = filepath
+            split.operator('pathaction.copy_text_to_clipboard', text=action_name, icon='COPYDOWN').text = filepath
             split.label(text=filepath)
 
     def execute(self, context):
@@ -255,7 +258,7 @@ class PATH_OT_switch_path_operator(Operator):
 
 
 classes = (
-    PATHACTION_OT_copy_string_to_clipboard,
+    PATHACTION_OT_copy_text_to_clipboard,
     PATH_OT_copy_blend_path,
     PATH_OT_switch_path_operator,
     PATH_OT_open_output_folder,
