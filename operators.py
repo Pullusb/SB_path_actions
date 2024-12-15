@@ -155,7 +155,7 @@ class PATH_OT_open_blend_folder(Operator):
     bl_description = "Open blend's directory in OS explorer\
         \n\
         \nCtrl: Copy path to blend\
-        \nCtrl+Alt: Copy alternatives paths to blend Pop-up\
+        \nCtrl+Alt: Copy alternatives paths to blend\
         \nShift: Open a side blend\
         \nAlt: Open blend app locations"
     bl_options = {'REGISTER'}
