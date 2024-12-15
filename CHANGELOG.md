@@ -5,7 +5,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
-2.1.0
+
+
+## [2.2.0] - 2024-12-15
+
+### Added
+
+Changed actions when pressing modifier keys while cliking on Folder icon button
+- `Ctrl` : Copy path to blend (unchanged)
+- `Ctrl + Alt` : Pop-up choices to copy alternatives representation of the path to blend + some options
+- `Shit` : Open side Blend (unchanged)
+- `Alt` : List app related locations, to open or copy path
+
+### Changed
+
+- revert shortcut changes from previous update
+- Code refactor
 
 ## [2.1.0] - 2024-12-06
 

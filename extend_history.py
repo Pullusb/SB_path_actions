@@ -8,6 +8,7 @@ class PATH_OT_dump_history(Operator) :
     bl_idname = "path.dump_history"
     bl_label = 'Dump File History'
     bl_description = 'Add the file history to a single file'
+    bl_options = {'REGISTER'}
 
     def execute(self, context):
         
@@ -56,7 +57,8 @@ class PATH_OT_dump_history(Operator) :
 class PATH_OT_restore_history(Operator) :
     bl_idname = "path.restore_history"
     bl_label = 'Restore File History'
-    bl_description = 'Replace the current history file by the tmp '
+    bl_description = 'Replace the current history file by the tmp'
+    bl_options = {'REGISTER'}
 
     def execute(self, context):
         

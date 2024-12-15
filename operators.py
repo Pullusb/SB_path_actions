@@ -1,12 +1,30 @@
 import bpy
 from pathlib import Path
 import os
-from bpy.types import Operator
+from bpy.types import Operator, Panel
 from os.path import dirname, basename, realpath, split, exists
 
 from .path_func import openFolder
+from .prefs import blender_locations
 
-class PATHACTION_OT_copy_string_to_clipboard(bpy.types.Operator):
+
+class PATHACTION_PT_blend_location_ui(Panel):
+    bl_space_type = "VIEW_3D"
+    # bl_region_type = "HEADER"
+    bl_region_type = "UI"
+    bl_category = "View"
+    bl_label = "Blender Locations"
+    bl_options = {'INSTANCED'}
+
+    def draw(self, context):
+        layout = self.layout
+        blender_locations(layout)
+
+        ## Limit single addon search to dev mode ?
+        # if bpy.context.preferences.addons[__package__].preferences.dev_mode:
+        layout.operator("path.open_addon_directory", text='Single Addon Directory', icon='VIEWZOOM') # PLUGIN
+
+class PATHACTION_OT_copy_string_to_clipboard(Operator):
     bl_idname = "pathaction.copy_string_to_clipboard"
     bl_label = "Copy String"
     bl_description = "Copy passed string to clipboard"
@@ -21,7 +39,7 @@ class PATHACTION_OT_copy_string_to_clipboard(bpy.types.Operator):
         self.report({'INFO'}, f'Copied: {self.string}')
         return {"FINISHED"}
 
-class PATH_OT_copy_blend_path(bpy.types.Operator):
+class PATH_OT_copy_blend_path(Operator):
     bl_idname = "path.copy_blend_path"
     bl_label = "Copy Blend Path"
     bl_description = "Copy path to blend from a list of proposed alternative"
@@ -132,8 +150,11 @@ class PATH_OT_open_blend_folder(Operator):
     bl_idname = "wm.open_blend_folder"
     bl_label = "Open blend folder"
     bl_description = "Open blend's directory in OS explorer\
+        \n\
         \nCtrl: Copy path to blend\
-        \nShift: Open a side blend"
+        \nCtrl+Alt: Copy alternatives paths to blend Pop-up\
+        \nShift: Open a side blend\
+        \nAlt: Open blend app locations"
     bl_options = {'REGISTER'}
 
     @classmethod
@@ -154,22 +175,31 @@ class PATH_OT_open_blend_folder(Operator):
         #     bpy.context.window_manager.clipboard = fileloc
         #     self.report({'INFO'}, f'Copied: {fileloc}')
         #     return {'FINISHED'}
-        if self.ctrl:
+        
+        if self.ctrl and self.alt:
+            ## Alternative path to blend
             bpy.ops.path.copy_blend_path('INVOKE_DEFAULT')
-            # bpy.context.window_manager.clipboard = fileloc
-            # self.report({'INFO'}, f'Copied: {fileloc}')
             return {'FINISHED'}
+        
+        elif self.ctrl:
+            ## Direct raw path copy
+            bpy.context.window_manager.clipboard = fileloc
+            self.report({'INFO'}, f'Copied: {fileloc}')
+            return {'FINISHED'}
+        
         elif self.shift:
+            ## Open side blend
             bpy.ops.wm.open_side_blend('INVOKE_DEFAULT')
             self.report({'INFO'}, f'Open side blend')
             return {'FINISHED'}
-        # elif self.alt:
-        #     bpy.context.window_manager.clipboard = basename(fileloc)
-        #     self.report({'INFO'}, f'Copied: {basename(fileloc)}')
-        #     return {'FINISHED'}
+        
+        elif self.alt:
+            ## Blend user/config/addon locations
+            bpy.ops.wm.call_panel(name="PATHACTION_PT_blend_location_ui", keep_open=True)
+            return {'FINISHED'}
 
         openFolder(fileloc)
-         
+
         self.report({'INFO'}, "Blend's folder opened")
         return {'FINISHED'}
 
@@ -205,7 +235,7 @@ class PATH_OT_open_output_folder(Operator):
         return {'FINISHED'}
 
        
-## Only accessible trough search
+## Only accessible through search (when developper extras is enabled)
 class PATH_OT_switch_path_operator(Operator):
     """toggle path absolute/relative"""
     bl_idname = "path.switch_output_path_mode"
@@ -220,7 +250,7 @@ class PATH_OT_switch_path_operator(Operator):
             bpy.context.scene.render.filepath = realpath(bpy.path.abspath(fpath))
         else:
             bpy.context.scene.render.filepath = bpy.path.relpath(fpath)
-        
+
         return {'FINISHED'}
 
 
@@ -232,6 +262,7 @@ classes = (
     PATH_OT_open_blend_folder,
     PATH_OT_browser_to_blend_folder,
     PATH_OT_open_filepath_folder,
+    PATHACTION_PT_blend_location_ui,
 )
 
 def register():
