@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- ## [Unreleased] -->
 
 
+## [2.3.0] - 2025-01-12
+
+### Added
+
+The other copy buttons can be used with `Alt + click` allow to copy alternatives paths with different quote styles
+
+Custom history display accessed from `Alt + Click` on folder icon with following feature:
+- choose to inspect another blender version history (default to current blender version)
+- click on a file name to open in-place (same as classic history)
+- button to open in new blender instance
+- button to open folder in OS
+- button to copy blend path (`Alt + click` on it for alternative formatting choice)
+- choices are greyed out when files are no longer available (in this case, open folder bring to the uppermost available folder).
+
+### Changed
+
+Now ask for confirmation when current blend is not saved and user try to open from *side blend* or from new *File history*
 
 ## [2.2.0] - 2024-12-15
 

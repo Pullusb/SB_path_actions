@@ -4,6 +4,8 @@ from bpy.types import Operator
 import tempfile
 import shutil
 
+## (Yet) Unexposed operator to dunp history file and restore it (can do later using another blender versions)
+
 class PATH_OT_dump_history(Operator) :
     bl_idname = "path.dump_history"
     bl_label = 'Dump File History'

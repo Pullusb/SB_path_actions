@@ -18,6 +18,9 @@ class PATHACTION_PT_blend_location_ui(Panel):
 
     def draw(self, context):
         layout = self.layout
+        # layout.label(text="Blender Locations")
+        layout.operator("pathaction.blend_history", text="File History", icon='BLENDER') # FILE_BLEND
+
         blender_locations(layout)
 
         ## Limit single addon search to dev mode ?
@@ -36,11 +39,171 @@ class PATHACTION_OT_copy_text_to_clipboard(Operator):
     
     def execute(self, context):
         if not self.text:
+            self.report({'WARNING'}, f'Nothing to copy!')
             return {"CANCELLED"}
         bpy.context.window_manager.clipboard = self.text
         if self.report_info:
             self.report({'INFO'}, f'Copied: {self.text}')
         return {"FINISHED"}
+
+
+## Popup to copy alternative path from a single generic path
+class PATHACTION_OT_copy_alternative_path(bpy.types.Operator):
+    bl_idname = "pathaction.copy_alternative_path"
+    bl_label = "Copy Alternative Path"
+    bl_description = "Copy a chosen alternative path in a list from a single path"
+    bl_options = {"REGISTER", "INTERNAL"}
+
+    path : bpy.props.StringProperty(options={'SKIP_SAVE'})
+
+    # probe : bpy.props.BoolProperty(name="Probe",
+    #     description="Check if path is valid",
+    #     default=False, options={'SKIP_SAVE'})
+
+    relative_to_blend : bpy.props.BoolProperty(name="Relative to Blend",
+        description="Show path absolute/relative to current blend file, like libraries or links",
+        default=False)
+
+    quote_style : bpy.props.EnumProperty(
+        name="Quote Style",
+        description="Choose the quote style",
+        items=(
+            ('PLAIN', "Plain", "No quotes", 0),
+            ('DOUBLE', "Double Quote", 'Wrap with "', 1),
+            ('SINGLE', "Single Quote", "Wrap with '", 2),
+            ('BACK', "Back Quote", "Wrap with `", 3)
+        ),
+        default='PLAIN',
+        # options={'SKIP_SAVE'}
+    )
+
+    report_info : bpy.props.BoolProperty(name="Report Info", default=True)
+
+    def invoke(self, context, event):
+        if not self.path:
+            return {"CANCELLED"}
+        self.pathes = []
+
+        try:
+            path_obj = Path(self.path)
+            absolute = Path(os.path.abspath(bpy.path.abspath(self.path)))
+            resolved = Path(bpy.path.abspath(self.path)).resolve()
+        except:
+            # case of invalid / non-accessable path
+            bpy.context.window_manager.clipboard = self.path
+            self.report({'INFO'}, f'Copied: {self.path}')
+            return self.execute(context)
+
+        self.pathes.append(('Path', self.path))
+        self.pathes.append(('Parent', dirname(self.path)))
+
+        ## Show absolute path if different
+        if absolute != path_obj:        
+            self.pathes.append(('Absolute', str(absolute)))
+            self.pathes.append(('Absolute Parent', str(absolute.parent)))
+
+        ## Show resolved path if different
+        if absolute != resolved:
+            self.pathes.append(('Resolved', str(resolved)))
+            self.pathes.append(('Absolute Parent', str(resolved.parent)))
+
+        ## TODO: If current Blend file is saved, also show relative path to blend (if path is not already relative)
+        ## Moslty interesting for libraries (could be shown only if a dedicated operator prop is enabled)
+        # /wip relative_path
+        # if self.relative_to_blend and bpy.data.is_saved:
+        #     ## if it's a relative path, show absolute path
+        #     ## how to detect if it's relative to blend ? (could be a library or a link)
+        #     if path_obj.is_absolute():
+        #         blend_path = Path(bpy.data.filepath)
+        #         # if not blend_path.is_absolute():
+        #         #     blend_path = blend_path.resolve()
+        #         relative = path_obj.relative_to(blend_path.parent)
+        #         self.pathes.append(('Relative to Blend', str(relative))
+        #     )
+        #     blend_path = Path(bpy.data.filepath)
+        #     # if not blend_path.is_absolute():
+        #     #     blend_path = blend_path.resolve()
+        #     relative = path_obj.relative_to(blend_path.parent)
+        #     self.pathes.append(('Relative to Blend', str(relative)))
+        ## wip /
+
+        self.pathes.append(('Name', path_obj.name))
+        self.pathes.append(('Stem', path_obj.stem))
+
+        maxlen = max(len(l[1]) for l in self.pathes)
+        popup_width = 800 
+        if maxlen < 50:
+            popup_width = 500
+        elif maxlen > 100:
+            popup_width = 1000
+        return context.window_manager.invoke_props_dialog(self, width=popup_width)
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = False
+
+        # with align True, path are probably too close visually
+        col = layout.column(align=False)
+        row = col.row()
+        # row.use_property_split = False # <- only on row
+        row.prop(self, 'quote_style', text='Quote Style', expand=True)
+
+        col.separator()
+
+        for action_name, filepath in self.pathes:
+
+            if self.quote_style == 'DOUBLE':
+                filepath = f'"{filepath}"'
+            elif self.quote_style == 'SINGLE':
+                filepath = f"'{filepath}'"
+            elif self.quote_style == 'BACK':
+                filepath = f"`{filepath}`"
+
+            split=col.split(factor=0.2, align=True)
+
+            op = split.operator('pathaction.copy_text_to_clipboard', text=action_name, icon='COPYDOWN')
+            op.text = filepath
+            op.report_info = self.report_info
+
+            split.label(text=filepath)
+
+    def execute(self, context):
+        return {"FINISHED"}
+
+
+## Same as copy_text_to_clipboard, but dedicated to path, and with optional popup for alternative
+class PATHACTION_OT_copy_path(Operator):
+    bl_idname = "pathaction.copy_path"
+    bl_label = "Copy Path To Clipboard"
+    bl_description = "Click: Copy path\
+        \nAlt + Click: Pop-up alternative path to copy (with optional quote styles)"
+    bl_options = {"REGISTER", "INTERNAL"}
+
+    path : bpy.props.StringProperty(options={'SKIP_SAVE'})
+    
+    report_info : bpy.props.BoolProperty(name="Report Info", default=True)
+
+    def invoke(self, context, event):
+        if event.alt:
+            return bpy.ops.pathaction.copy_alternative_path('INVOKE_DEFAULT', path=self.path)
+        return self.execute(context)
+
+    def execute(self, context):
+        ## Could also just call the other operator:
+        # bpy.ops.pathaction.copy_text_to_clipboard(path=self.path, report_info=self.report_info)
+        # return {"FINISHED"}
+        if not self.path:
+            self.report({'WARNING'}, f'Nothing to copy!')
+            return {"CANCELLED"}
+        bpy.context.window_manager.clipboard = self.path
+        if self.report_info:
+            self.report({'INFO'}, f'Copied: {self.path}')
+        return {"FINISHED"}
+
+
+### --
+## Copy *blend* path and alternatives
+## 
 
 class PATH_OT_copy_blend_path(Operator):
     bl_idname = "path.copy_blend_path"
@@ -262,6 +425,8 @@ class PATH_OT_switch_path_operator(Operator):
 
 classes = (
     PATHACTION_OT_copy_text_to_clipboard,
+    PATHACTION_OT_copy_alternative_path,
+    PATHACTION_OT_copy_path,
     PATH_OT_copy_blend_path,
     PATH_OT_switch_path_operator,
     PATH_OT_open_output_folder,

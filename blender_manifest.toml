@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "SB_path_actions"
-version = "2.2.0"
+version = "2.3.0"
 name = "Path Actions"
 tagline = "Open blend folder in OS explorer, and more"
 maintainer = "Samuel Bernou <bernou.samuel@gmail.com>"

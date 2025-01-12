@@ -27,16 +27,16 @@ def blender_locations(layout):
     config_folder = bpy.utils.user_resource('CONFIG')
     row = col.row(align=True)
     row.operator("wm.path_open", text='Config').filepath = config_folder
-    row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = config_folder
+    row.operator("pathaction.copy_path", text="", icon='COPYDOWN').path = config_folder
 
     bin_path = Path(bpy.app.binary_path)
     app_folder = str(bin_path.parent)
     row = col.row(align=True)
     row.operator("wm.path_open", text='Blender App Folder').filepath = app_folder
-    row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = app_folder
+    row.operator("pathaction.copy_path", text="", icon='COPYDOWN').path = app_folder
 
     row = col.row(align=True)
-    row.operator("pathaction.copy_text_to_clipboard", text="Copy Blender Executable Path", icon='COPYDOWN').text = str(bin_path)
+    row.operator("pathaction.copy_path", text="Copy Blender Executable Path", icon='COPYDOWN').path = str(bin_path)
 
     col.separator()
 
@@ -46,21 +46,21 @@ def blender_locations(layout):
         extension_dir = str(Path(bpy.utils.user_resource('EXTENSIONS')))
         row = col.row(align=True)
         row.operator("wm.path_open", text='Extensions').filepath = extension_dir
-        row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = extension_dir
+        row.operator("pathaction.copy_path", text="", icon='COPYDOWN').path = extension_dir
 
 
     user_scripts = str(Path(bpy.utils.user_resource('SCRIPTS')))
     row = col.row(align=True)
     # Local user addon source (usually appdata/.config folders). Where it goes when 'install from file'
     row.operator("wm.path_open", text='User Scripts').filepath = user_scripts
-    row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = user_scripts
+    row.operator("pathaction.copy_path", text="", icon='COPYDOWN').path = user_scripts
     
     # local default installed addons (release)
 
     native_scripts = str(Path(bpy.utils.resource_path('LOCAL')) / 'scripts')
     row = col.row(align=True)
     row.operator("wm.path_open", text='Native Scripts').filepath = native_scripts
-    row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = native_scripts
+    row.operator("pathaction.copy_path", text="", icon='COPYDOWN').path = native_scripts
 
     # external scripts (if specified)
     preferences = bpy.context.preferences
@@ -70,7 +70,7 @@ def blender_locations(layout):
             extern_script = str(Path(external_scripts))
             row = col.row(align=True)
             row.operator("wm.path_open", text='External Addons').filepath = extern_script
-            row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = extern_script
+            row.operator("pathaction.copy_path", text="", icon='COPYDOWN').path = extern_script
     else:
         if len(preferences.filepaths.script_directories):
             col.label(text='Other Script Directories:')
@@ -78,7 +78,7 @@ def blender_locations(layout):
                 if s.directory:
                     row = col.row(align=True)
                     row.operator("wm.path_open", text=s.name).filepath = str(Path(s.directory))
-                    row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = str(Path(s.directory))
+                    row.operator("pathaction.copy_path", text="", icon='COPYDOWN').path = str(Path(s.directory))
 
     if not bpy.context.preferences.addons[__package__].preferences.dev_mode:
         return
@@ -88,13 +88,13 @@ def blender_locations(layout):
     temp_dir = tempfile.gettempdir()
     row = col.row(align=True)
     row.operator("wm.path_open", text='Temp Directory').filepath = temp_dir
-    row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = temp_dir
+    row.operator("pathaction.copy_path", text="", icon='COPYDOWN').path = temp_dir
     
     ## Temp directory of current session (not really useful)
     # session_temp_dir = bpy.app.tempdir
     # row = col.row(align=True)
     # row.operator("wm.path_open", text='Session Temp Directory').filepath = session_temp_dir
-    # row.operator("pathaction.copy_text_to_clipboard", text="", icon='COPYDOWN').text = session_temp_dir
+    # row.operator("pathaction.copy_path", text="", icon='COPYDOWN').path = session_temp_dir
 
 
 class PATH_addon_preferences(bpy.types.AddonPreferences):

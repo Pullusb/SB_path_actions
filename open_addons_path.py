@@ -1,4 +1,3 @@
-import enum
 import bpy
 import re   
 from . import path_func

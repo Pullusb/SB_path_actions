@@ -3,7 +3,7 @@
 bl_info = {
     "name": "Path Actions",
     "author": "Samuel Bernou",
-    "version": (2, 2, 0),
+    "version": (2, 3, 0),
     "blender": (4, 2, 0),
     "location": "Window top right corner, browser up-left corner, addon prefs",
     "description": "Open blend folder in OS explorer",
@@ -14,6 +14,7 @@ bl_info = {
 
 from . import (
             operators,
+            history,
             blend_open_ops,
             extend_history,
             open_addons_path,
@@ -22,9 +23,10 @@ from . import (
             prefs)
 
 mods = (
-    extend_history,
-    blend_open_ops,
     operators,
+    blend_open_ops,
+    history,
+    extend_history,
     open_addons_path,
     panels,
     keymap,
