@@ -232,10 +232,9 @@ class PATHACTION_OT_blend_history(Operator):
     show_full_path : bpy.props.BoolProperty(name='Show Full Path', default=False)
 
     def invoke(self, context, event):
-        ## Triggering the enum update
+        ## Triggering the enum update to load current history
         self.blender_versions = self.blender_versions
         return context.window_manager.invoke_props_dialog(self, width=450)
-        # return context.window_manager.invoke_props_dialog(self)
 
     def draw(self, context):
         layout = self.layout
@@ -249,26 +248,36 @@ class PATHACTION_OT_blend_history(Operator):
         # layout.prop(self, 'show_full_path')
         layout.prop(self, 'blender_versions')
 
-        col = layout.column(align=True)
         if not len(list_collection):
             layout.label(text='Error, Nothing found', icon='ERROR')
             return
-        
+
+        main_row = layout.row(align=True)
+        blend_col = main_row.column(align=True)
+        blend_col.alignment = 'LEFT'
+
+        # main_row.separator_spacer()
+        # main_row.separator()
+        action_col = main_row.column(align=True)
+        action_col.alignment = 'RIGHT'
+
+        col = layout.column(align=True)
         for item in list_collection:
+            blend_row = blend_col.row(align=True)
+            action_row = action_col.row(align=True)
+            action_row.alignment = 'RIGHT'
+
             if item.is_error_message:
-                layout.label(text=item.path, icon='ERROR')
+                blend_row.label(text=item.path, icon='ERROR')
+                action_row.label(text='', icon='BLANK1')
                 continue
-            
+
             blend = Path(item.path)
 
             open_path = item.path
             if not item.is_valid:
                 open_path = item.valid_parent_path
 
-            row = col.row(align=True)
-
-
-            ## FIXME: avoid breaking alignment with long paths
             valid_icon = 'FILE_BLEND' if item.is_valid else 'LIBRARY_DATA_BROKEN' # FILE_HIDDEN
             
             # icon_row = row.row(align=True)
@@ -276,22 +285,18 @@ class PATHACTION_OT_blend_history(Operator):
             # icon_row.alignment = 'LEFT'
 
             ## Label
-            left_row = row.row(align=True)
-            left_row.alignment = 'LEFT'
-            # left_row.label(text='', icon=valid_icon)
-            left_row.enabled = item.is_valid
-            # left_row.ui_units_x = 25.0
+            blend_row.alignment = 'LEFT'
+            # blend_row.label(text='', icon=valid_icon)
+            blend_row.enabled = item.is_valid
+            # blend_row.ui_units_x = 25.0
 
             display_text = item.path if self.show_full_path else blend.name            
-            op = left_row.operator('wm.open_mainfile', text=display_text, emboss=False, icon=valid_icon)
+            op = blend_row.operator('wm.open_mainfile', text=display_text, emboss=False, icon=valid_icon)
             op.filepath = str(item.path)
             op.display_file_selector = False
             op.load_ui = context.preferences.filepaths.use_load_ui
 
             ## Action buttons
-            action_row = row.row(align=True)
-            action_row.alignment = 'RIGHT'
-
             action_row.operator('path.open_browser', text='', icon='FILE_FOLDER').filepath = open_path
             action_row.operator('pathaction.copy_path', text='', icon='COPYDOWN').path = item.path
 
