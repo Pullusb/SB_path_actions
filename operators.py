@@ -18,9 +18,9 @@ class PATHACTION_PT_blend_location_ui(Panel):
 
     def draw(self, context):
         layout = self.layout
-        # layout.label(text="Blender Locations")
-        layout.operator("pathaction.blend_history", text="File History", icon='BLENDER') # FILE_BLEND
-
+        layout.operator("path.copy_blend_path", text="Copy Path To Blend", icon='COPYDOWN')
+        layout.operator("pathaction.blend_history", text="File History", icon='FILE_BLEND') # BLENDER
+        layout.separator()
         blender_locations(layout)
 
         ## Limit single addon search to dev mode ?
@@ -252,7 +252,10 @@ class PATH_OT_copy_blend_path(Operator):
             self.pathes.append(('Resolved Parent', str(resolved.parent)))
 
         self.pathes.append(('Name', path_obj.name))
-        self.pathes.append(('Stem', path_obj.stem))
+        
+        ## Show stem if different from name
+        if path_obj.stem != path_obj.name:
+            self.pathes.append(('Stem', path_obj.stem))
 
         maxlen = max(len(l[1]) for l in self.pathes)
         popup_width = 800 
@@ -283,7 +286,7 @@ class PATH_OT_copy_blend_path(Operator):
             elif self.quote_style == 'BACK':
                 filepath = f"`{filepath}`"
 
-            split=col.split(factor=0.2, align=True)
+            split=col.split(factor=0.12, align=True)
             split.operator('pathaction.copy_text_to_clipboard', text=action_name, icon='COPYDOWN').text = filepath
             split.label(text=filepath)
 
