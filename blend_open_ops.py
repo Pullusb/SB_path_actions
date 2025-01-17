@@ -24,7 +24,8 @@ class PATH_OT_open_in_new_instance(Operator) :
 class PATH_OT_full_reopen(Operator) :
     bl_idname = "wm.full_reopen"
     bl_label = 'Full Reopen Blend'
-    bl_description = "Close and re-open blender file\nCtrl: Force reopen even if file is not saved"
+    bl_description = "Close and re-open blender file\
+        \nCtrl: Force reopen even if file is not saved"
     bl_options = {"REGISTER", "INTERNAL"}
 
     @classmethod
@@ -76,36 +77,53 @@ class PATH_OT_open_side_blend(Operator) :
         except Exception:
             self.blend_list.sort(key=lambda x: x.name)
         
-        wm = context.window_manager
+        ## Adapt panel size to longest name... (Not predictable, font is not monospace)
+        self.longest_path = max([len(i.name) for i in self.blend_list])
+        estimated = int(self.longest_path * 8.8)
+        popup_width = max(250, estimated) # low clamp
+        popup_width = min(popup_width, 520) # high clamp
+
+        # print('longest_path:', self.longest_path)# Dbg
+        # print('estimated width: ', estimated)# Dbg
+
         ## using a 'props_popup' crashes blender (using dialog add an OK button...but works)
         # return wm.invoke_props_popup(self, event) # need "undo" in bl_options else get an error
-
-        return context.window_manager.invoke_props_dialog(self)
+        wm = context.window_manager
+        return context.window_manager.invoke_props_dialog(self, width=popup_width)
 
     def draw(self, context):
         layout = self.layout
-        col = layout.column()
+        main_row = layout.row(align=True)
+        blend_col = main_row.column(align=True)
+        blend_col.alignment = 'LEFT'
+
+        # main_row.separator_spacer()
+        # main_row.separator()
+        option_col = main_row.column(align=True)
+        option_col.alignment = 'RIGHT'
+        # option_col.ui_units_x = 2.2
+
         for path in self.blend_list:
-            
-            mainrow=col.row()
-            subrow = mainrow.row()
-            subrow.alignment = 'LEFT'
+            blend_row = blend_col.row()
+            blend_row.alignment = 'LEFT'
             
             if path == Path(bpy.data.filepath):
                 ## Current file, Displayed but disabled (non-clickable)
-                subrow.enabled=False
-                subrow.operator('wm.open_mainfile', text=path.name, emboss=False).filepath = str(path) # path.as_posix()
+                blend_row.enabled=False
+                blend_row.operator('wm.open_mainfile', text=path.name, emboss=False).filepath = str(path) # path.as_posix()
             
             else:
-                # subrow.operator_context = "EXEC_AREA"# , (should be "INVOKE_AREA" if file was not saved) # no need in blender 4.2+
-                op = subrow.operator('wm.open_mainfile', text=path.name, emboss=False)
+                # blend_row.operator_context = "EXEC_AREA"# , (should be "INVOKE_AREA" if file was not saved) # no need in blender 4.2+
+                op = blend_row.operator('wm.open_mainfile', text=path.name, emboss=False)
                 op.filepath = str(path)
                 op.display_file_selector = False # adding this arg (True or False) display the warning correctly when file is not saved
                 op.load_ui = context.preferences.filepaths.use_load_ui
             
-            row = mainrow.row()
-            row.alignment = 'RIGHT'
-            row.operator('wm.open_in_new_instance', text='', icon='FILE_BACKUP').filepath = str(path)
+            # option_row = option_col.box()
+            option_row = option_col.row(align=True)
+            option_row.alignment = 'RIGHT'
+            option_row.operator('wm.open_in_new_instance', text='', icon='FILE_BACKUP').filepath = str(path)
+            option_row.operator('pathaction.copy_path', text='', icon='COPYDOWN').path = str(path)
 
     def execute(self, context):
         return {'FINISHED'}
