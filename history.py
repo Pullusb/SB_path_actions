@@ -136,12 +136,6 @@ def get_user_path_all_versions(self, context):
     paths.insert(0, (str(current_path), f'{current_path.name} (Current)', ''))
     return paths
 
-## Load once on WM, then refresh enum from the property group
-class PATHACTION_PG_blender_versions(bpy.types.PropertyGroup):
-    path : bpy.props.StringProperty()
-    version_name : bpy.props.StringProperty()
-    # add config path here ?
-
 class PATHACTION_PG_path_list(bpy.types.PropertyGroup):
     path : bpy.props.StringProperty()
     # name : bpy.props.StringProperty() # tail
@@ -240,28 +234,18 @@ class PATHACTION_OT_blend_history(Operator):
     def invoke(self, context, event):
         ## Triggering the enum update
         self.blender_versions = self.blender_versions
-
-        ## TODO: Test if possible to refresh enum from a collection property set in invoke
-        # wm = context.window_manager
-        # wm.pa_blender_versions.clear()
-        # for version in get_user_path_all_versions(None, context):
-        #     item = wm.pa_blender_versions.add()
-        #     item.path = version[0]
-        #     item.version_name = version[1]
-
-        ## Need Trigger prop for update ?
-        # return context.window_manager.invoke_props_dialog(self, width=600) # large width for full path display
         return context.window_manager.invoke_props_dialog(self, width=450)
         # return context.window_manager.invoke_props_dialog(self)
 
     def draw(self, context):
         layout = self.layout
-
         wm = context.window_manager
+
         list_collection = wm.pa_path_list
 
         layout.use_property_decorate = False
         layout.use_property_split = True
+
         # layout.prop(self, 'show_full_path')
         layout.prop(self, 'blender_versions')
 
@@ -318,8 +302,16 @@ class PATHACTION_OT_blend_history(Operator):
     def execute(self, context):
         return {'FINISHED'}
 
+## Not possible to add on topbar menu
+# def extend_recent_file_menu(self, context):
+#     '''Extend the recent file menu with the operators'''
+#     layout = self.layout
+#     layout.separator()
+#     # layout.operator(PATH_OT_open_last_file.bl_idname, text='Open Last File', icon='FILE_BLEND')
+#     # layout.operator("path.open_from_history", text='Search in history', icon='FILE_BLEND')
+#     layout.operator("pathaction.blend_history", text='Advanced History', icon='FILE_BLEND')
+
 classes = (
-PATHACTION_PG_blender_versions,
 PATHACTION_PG_path_list,
 PATHACTION_OT_blend_history,
 PATH_OT_open_last_file,
@@ -330,11 +322,16 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
-    bpy.types.WindowManager.pa_blender_versions = bpy.props.CollectionProperty(type=PATHACTION_PG_blender_versions)
     bpy.types.WindowManager.pa_path_list = bpy.props.CollectionProperty(type=PATHACTION_PG_path_list)
 
+    ## Add to open recent "File > Open Recent" menu
+    # bpy.types.TOPBAR_MT_file_open_recent.append(extend_recent_file_menu) # not found
+    # bpy.types.TOPBAR_MT_file.append(extend_recent_file_menu) # Add to File menu ?
+
 def unregister():
-    del bpy.types.WindowManager.pa_blender_versions
+    # bpy.types.TOPBAR_MT_file.remove(extend_recent_file_menu)
+    # bpy.types.TOPBAR_MT_file_open_recent.remove(extend_recent_file_menu)
+
     del bpy.types.WindowManager.pa_path_list
 
     for cls in reversed(classes):
