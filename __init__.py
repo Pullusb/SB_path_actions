@@ -3,7 +3,7 @@
 bl_info = {
     "name": "Path Actions",
     "author": "Samuel Bernou",
-    "version": (2, 3, 0),
+    "version": (2, 3, 1),
     "blender": (4, 2, 0),
     "location": "Window top right corner, browser up-left corner, addon prefs",
     "description": "Open blend folder in OS explorer",

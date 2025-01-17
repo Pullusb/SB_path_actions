@@ -20,18 +20,18 @@ def TopBarOpenButton(self, context):
 def BrowserPathActionsButtons(self, context):
     layout = self.layout
     row = layout.row(align=True)
-    if bpy.data.filepath:
-        # button to paste blend path in blender filebrowser's path (file must be saved for the button to appear)
-        row.operator(
-            "path.browser_to_blend_folder",
-            text="Blend Location",
-            icon="FILE_BACKUP")
     # button to open current filepath destination in OS browser
     row.operator(
         "path.open_filepath",
         text="Open Folder",
         icon="FILE_FOLDER")
 
+    if bpy.data.filepath:
+        # button to paste blend path in blender filebrowser's path (file must be saved for the button to appear)
+        row.operator(
+            "path.browser_to_blend_folder",
+            text="Blend Location",
+            icon="FILE_BACKUP")
 
 ## From space_filebrowser.py
 # def panel_poll_is_upper_region(region):
