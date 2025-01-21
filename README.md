@@ -27,24 +27,41 @@ Consult [changelog here](CHANGELOG.md)
 
 ## Upper right button
 
-Add a folder icon button at the right of the topbar that open Blend's current directory
+Add a folder icon button at the right of the topbar that open Blend's current directory on simple click.
 
 ![OpenBlendFolder](https://github.com/Pullusb/images_repo/blob/master/Bl_PathAction_OpenBlendFolder28.png)
   
-Alternative functions to _Open folder_ button, instead of opening:
+Modifier-keys + click on the button to trigger other actions:
+- `Ctrl + Click` : Copy Blend path
+- `Shift + Click` : Open Side Blend
+- `Alt + Click` : Alternative actions
+- `Cltr + Alt + Click` : Copy formatted path to Blend popup
 
-- combine with `Ctrl` to copy _full path to file_ 
-- combine with `Ctrl + Shift` to copy _path to directory_ 
-- combine with `Alt` to copy _file name_
+## Open Side Blend (Shift + Click)
 
-## Open side blend
-
-`Shift + Clic` open a new menu to open files that are in same folder as the current blend:
-  - click on blend names to open "in place"
-  - click on right icon to open in a new instance of blender
-
+List other blend file in the same folder as current blend (ordered):
+- Click on filename to **open, replacing current instance**.
+- Click on the dotted blender file icon to **open in another blender instance.**
+- Click on "copy" icon to **copy path to blend**
 
 ![Open side blend](https://github.com/Pullusb/images_repo/blob/master/PA_v2_open_side_blend.png)
+
+### Alternative actions (Alt + Click)
+
+This menu show an extended set of path related actions:
+
+**Alternative multi-version history** (enhanced "Open recent")  
+with options to:
+- open blend
+- open in new instance
+- copy path
+
+**Copy formatted path to Blend** (same as `Ctrl+Alt+Click` on corner folder icon)
+
+**open/copy app related paths**:
+- blender-app/config/temp/script-directories folders
+- copy path to executable
+- search/open addon folder
 
 ## Developer mode: full reload button
 
