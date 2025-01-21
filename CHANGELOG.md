@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 `Open side blend` popup size is now fitted to longer path (could rapidly truncate long blend name before)
 Swap button placement in blender filebrowser
 Copy alternative path to blende in `Alt` popup.
+Change licence to GPL V3 (to comply with Blender extension platform)
 
 ## [2.3.0] - 2025-01-12
 

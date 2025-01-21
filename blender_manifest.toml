@@ -8,13 +8,16 @@ maintainer = "Samuel Bernou <bernou.samuel@gmail.com>"
 type = "add-on"
 
 # Open folders, copy blender paths to clipboard
-permissions = ["files", "clipboard"]
+
+license = ["SPDX:GPL-3.0-or-later"]
 
 website = "https://github.com/Pullusb/SB_path_actions"
 tags = ["System", "Development"]
 
 blender_version_min = "4.2.0"
 
-license = ["SPDX:GPL-2.0-or-later"]
+copyright = ["2017-2025 Samuel Bernou"]
 
-copyright = ["2017-2024 Samuel Bernou"]
+[permissions]
+files = "Open folders, List Blend files"
+clipboard = "Copy path to files"
