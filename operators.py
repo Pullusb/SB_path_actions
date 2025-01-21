@@ -18,8 +18,8 @@ class PATHACTION_PT_blend_location_ui(Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator("path.copy_blend_path", text="Copy Path To Blend", icon='COPYDOWN')
         layout.operator("pathaction.blend_history", text="File History", icon='FILE_BLEND') # BLENDER
+        layout.operator("path.copy_blend_path", text="Copy Formatted Blend Path", icon='COPYDOWN') # Copy Blend Path Format...
         layout.separator()
         blender_locations(layout)
 
@@ -321,9 +321,9 @@ class PATH_OT_open_blend_folder(Operator):
     bl_description = "Open blend's directory in OS explorer\
         \n\
         \nCtrl: Copy path to blend\
-        \nCtrl+Alt: Copy alternatives paths to blend\
         \nShift: Open a side blend\
-        \nAlt: Open blend app locations"
+        \nAlt: History, copy paths or open blend app locations\
+        \nCtrl+Alt: Copy formatted blend path"
     bl_options = {'REGISTER'}
 
     # @classmethod

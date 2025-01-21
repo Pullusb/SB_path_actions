@@ -5,12 +5,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
-## [2.3.1] - 2025-01-17
+## [2.3.2] - 2025-01-21
 
 ### Changed
 
 `Open side blend` popup size is now fitted to longer path (could rapidly truncate long blend name before)
 Swap button placement in blender filebrowser
+Copy alternative path to blende in `Alt` popup.
 
 ## [2.3.0] - 2025-01-12
 

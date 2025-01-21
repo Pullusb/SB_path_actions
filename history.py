@@ -234,7 +234,7 @@ class PATHACTION_OT_blend_history(Operator):
     def invoke(self, context, event):
         ## Triggering the enum update to load current history
         self.blender_versions = self.blender_versions
-        return context.window_manager.invoke_props_dialog(self, width=450)
+        return context.window_manager.invoke_props_dialog(self, width=480)
 
     def draw(self, context):
         layout = self.layout
