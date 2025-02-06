@@ -21,6 +21,63 @@ class PATH_OT_open_in_new_instance(Operator) :
         path_func.open_blend_new_instance(self.filepath)
         return {'FINISHED'}
 
+
+def load_workspaces(src):
+    '''Load all workspace from a file and return list'''
+    with bpy.data.libraries.load(str(src), link=False) as (data_from, data_to):
+        setattr(data_to, 'workspaces', [item for item in getattr(data_from, 'workspaces')])
+    return data_to.workspaces
+
+def replace_workspaces(source_blend):
+    ### replace
+    ## rename wk to temp
+    
+    active_workspace_name = bpy.context.workspace.name
+    tmp = 'tmpold_'
+    
+    current_wks = [w for w in bpy.data.workspaces]
+    for wk in current_wks:
+        print(wk.name)
+        wk.name = f'{tmp}_{wk.name}'
+
+    new_wks = load_workspaces(source_blend)
+
+    ## import user workspaces
+    if not len(new_wks):
+        print('could not load new workspaces, Abort')
+        ## remove tmp prefix from name and abort
+        for wk in reversed(current_wks):
+            if wk.name.startswith(tmp):
+                wk.name = wk.name[len(tmp):]
+        return
+
+    ## Remove old temp workspaces by name
+    for wk in reversed(current_wks):
+        if wk.name.startswith(tmp):
+            with bpy.context.temp_override(workspace=wk):
+                bpy.ops.workspace.delete()
+    
+    same_wk = next((w for w in new_wks if w.name == active_workspace_name), None)
+    
+    if same_wk:
+        # print('Restore new workspace tab with same previous name')
+        bpy.context.window.workspace = same_wk
+    # else:
+    #     bpy.context.window.workspace = new_wks[0] # <- not the first in tab list
+
+def load_startup_workspace():
+    ## find startup source
+    user_startup = Path(bpy.utils.resource_path('USER'), 'config', 'startup.blend')
+
+    if user_startup.exists():
+        # user startup
+        source_blend = str(user_startup)
+        print('using startup:', source_blend)
+        replace_workspaces(source_blend)
+        return source_blend
+
+    print('!! No custom user startup!!')        
+
 class PATH_OT_full_reopen(Operator) :
     bl_idname = "wm.full_reopen"
     bl_label = 'Full Reopen Blend'
@@ -34,6 +91,17 @@ class PATH_OT_full_reopen(Operator) :
         return bpy.data.is_saved #only if file is saved?
 
     def invoke(self, context, event):
+        ## Alt action : Replace workspaces by appending startup and removing current
+        ## TODO: Can crash, need testing before implementation.
+        # if event.alt:
+        #     ret = load_startup_workspace()
+        #     if not ret:
+        #         self.report({'ERROR'}, 'Need to save a startup file first (File > Defaults > Save Startup File)')
+        #         return {'CANCELLED'}
+        #     self.report({'INFO'}, f'Loaded startup file workspaces from: {ret}')
+        #     return {'FINISHED'}
+
+        ## "full reopen" action (skip prompt with ctrl)
         if bpy.data.is_dirty and not event.ctrl:
             wm = context.window_manager
             return wm.invoke_props_dialog(self)
