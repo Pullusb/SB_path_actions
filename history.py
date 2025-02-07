@@ -1,4 +1,5 @@
 import bpy
+import re
 from pathlib import Path
 from bpy.types import Operator
 # from . import path_func
@@ -25,6 +26,14 @@ def open_last_recent_file():
         return (1, 'error, "recent-file.txt" not found')
     return (0, '')
 
+def fuzzy_match_ratio(s1, s2, case_sensitive=False):
+    '''Tell how much two passed strings are similar 1.0 being exactly similar'''
+    from difflib import SequenceMatcher
+    if case_sensitive:
+        similarity = SequenceMatcher(None, s1, s2)
+    else:
+        similarity = SequenceMatcher(None, s1.lower(), s2.lower())
+    return similarity.ratio()
 
 class PATH_OT_open_last_file(Operator):
     bl_idname = "path.open_last_file"
@@ -45,7 +54,7 @@ class PATH_OT_open_last_file(Operator):
                 self.report({'INFO'}, mess)
         return {"FINISHED"}
 
-### Search in open history
+### Search in history (Search popup)
 
 def get_history_list(self, context):
     '''return (identifier, name, description) of enum content'''
@@ -220,6 +229,8 @@ class PATHACTION_OT_blend_history(Operator):
     bl_label = "Blend History"
     bl_description = "Show the history of opened blend files with mutliple actions"
     bl_options = {"REGISTER"}
+    ## bl_prop works to go right into search-field editing, but that prevent hovering to display blend infos
+    # bl_property = "search_field" 
 
     blender_versions : bpy.props.EnumProperty(
         name="Blender Version",
@@ -229,6 +240,13 @@ class PATHACTION_OT_blend_history(Operator):
         options={'HIDDEN'},
         )
 
+    search_field : bpy.props.StringProperty(
+        name='Search Filter', default='',
+        description='Filter by name, case insensitive',
+        options={'TEXTEDIT_UPDATE'}
+        )
+
+    ## Not exposed, window cannot resize dynamically so full paths is always will always be shown truncated
     show_full_path : bpy.props.BoolProperty(name='Show Full Path', default=False)
 
     def invoke(self, context, event):
@@ -240,17 +258,48 @@ class PATHACTION_OT_blend_history(Operator):
         layout = self.layout
         wm = context.window_manager
 
-        list_collection = wm.pa_path_list
+        list_collection = wm.pa_path_list # list to create a copy
 
         layout.use_property_decorate = False
         layout.use_property_split = True
 
         # layout.prop(self, 'show_full_path')
         layout.prop(self, 'blender_versions')
+        layout.prop(self, 'search_field', text="", icon='VIEWZOOM')
 
         if not len(list_collection):
             layout.label(text='Error, Nothing found', icon='ERROR')
             return
+
+        search_terms = self.search_field
+        if search_terms:
+            result = [item for item in list_collection if search_terms.lower() in Path(item.path).name.lower()]
+
+            ## // Additional (and supernaive) fuzzy search to find "close" names
+            detail = ''
+            if not result:
+                ## Try to fuzzy match against names in list
+                result = [item for item in list_collection if fuzzy_match_ratio(search_terms, Path(item.path).name) > 0.6]
+                detail = 'No exact matchs, showing close names'
+            
+            if not result:
+                ## Try fuzzy match againts splitted parts of the names
+                result = [item for item in list_collection
+                          if any(
+                              [fuzzy_match_ratio(search_terms, x) > 0.7 for x in re.split(r'-|_|\s', Path(item.path).name)]
+                              )
+                         ]
+                detail = 'No exact matchs, showing elements containing close parts'
+
+            if not result:
+                layout.label(text='Nothing found', icon='ERROR')
+                return
+            
+            if detail:
+                layout.label(text=detail, icon='INFO')
+            ## End of additional fuzzy search //
+    
+            list_collection = result
 
         main_row = layout.row(align=True)
         blend_col = main_row.column(align=True)

@@ -322,7 +322,7 @@ class PATH_OT_open_blend_folder(Operator):
         \n\
         \nCtrl: Copy path to blend\
         \nShift: Open a side blend\
-        \nAlt: History, copy paths or open blend app locations\
+        \nAlt: History and blend app locations\
         \nCtrl+Alt: Copy formatted blend path"
     bl_options = {'REGISTER'}
 

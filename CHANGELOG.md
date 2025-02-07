@@ -5,6 +5,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [2.4.0] - 2025-02-07
+
+### Added
+
+Custom file history now have a search field:
+- filter blend names in showed history
+- when no exact result, try to fuzzy match blender name or parts of it.
+
+### Changed
+
+`Ctrl + Alt + Shit + O` now call file history window (from alternative actions panel) instead of recent file pure-search popup
+
+
 ## [2.3.2] - 2025-01-21
 
 ### Changed

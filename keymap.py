@@ -7,8 +7,9 @@ def register_keymaps(force=False):
     addon = bpy.context.window_manager.keyconfigs.addon
     km = addon.keymaps.new(name = "Window", space_type = "EMPTY")
 
-    ## Pop up search in history
-    idn = 'path.open_from_history'
+    ## Pop up history
+    # idn = 'path.open_from_history' # pure-search popup
+    idn = 'pathaction.blend_history' # custom history popup
     kmi = km.keymap_items.get(idn)
 
     # refresh here
@@ -38,8 +39,7 @@ def unregister_keymaps():
     if bpy.app.background:
         return
     for km, kmi in addon_keymaps:
-        if km.keymap_items.get(kmi.idname):
-            km.keymap_items.remove(kmi)
+        km.keymap_items.remove(kmi)
     addon_keymaps.clear()
 
 """ 
