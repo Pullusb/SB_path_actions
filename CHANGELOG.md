@@ -5,6 +5,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [2.4.1] - 2025-02-28
+
+### Added
+
+`Link Checker` popup, can be called from `Alt` panel on corner icon:
+- list external files linked or used within current blend file
+
+### Fixed
+
+Error when displaying relative file path's name and stem in "copy alternative path" operator
+
 ## [2.4.0] - 2025-02-07
 
 ### Added

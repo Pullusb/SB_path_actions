@@ -4,7 +4,7 @@ import subprocess
 from os.path import isfile, dirname, normpath
 from shutil import which
 
-def openFolder(folderpath):
+def open_folder(folderpath):
     """
     open the folder at the path given
     with cmd relative to user's OS

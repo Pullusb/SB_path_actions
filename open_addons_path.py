@@ -99,7 +99,7 @@ class PATH_OT_search_open_addon_path(Operator) :
     def execute(self, context):
         chosen = self.addons_enum
         self.report({'INFO'}, f'Open: {chosen}')
-        path_func.openFolder(chosen)
+        path_func.open_folder(chosen)
         return {'FINISHED'}
 
     def invoke(self, context, event):

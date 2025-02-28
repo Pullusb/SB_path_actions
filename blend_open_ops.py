@@ -212,7 +212,7 @@ class PATH_OT_open_browser(Operator):
             self.report({'ERROR'}, f'Not found : {self.filepath}')
             return {"CANCELLED"}
 
-        path_func.openFolder(self.filepath)
+        path_func.open_folder(self.filepath)
 
         self.report({'INFO'}, f'Open: {self.filepath}')
         return {"FINISHED"}

@@ -4,7 +4,7 @@ import os
 from bpy.types import Operator, Panel
 from os.path import dirname, basename, realpath, split, exists
 
-from .path_func import openFolder
+from .path_func import open_folder
 from .prefs import blender_locations
 
 
@@ -20,6 +20,7 @@ class PATHACTION_PT_blend_location_ui(Panel):
         layout = self.layout
         layout.operator("pathaction.blend_history", text="File History", icon='FILE_BLEND') # BLENDER
         layout.operator("path.copy_blend_path", text="Copy Formatted Blend Path", icon='COPYDOWN') # Copy Blend Path Format...
+        layout.operator("pathaction.links_checker", text="Check File Links", icon='LINKED') # Check Links 
         layout.separator()
         blender_locations(layout)
 
@@ -84,6 +85,7 @@ class PATHACTION_OT_copy_alternative_path(bpy.types.Operator):
             return {"CANCELLED"}
         self.pathes = []
 
+        print('self.path: ', self.path)
         try:
             path_obj = Path(self.path)
             absolute = Path(os.path.abspath(bpy.path.abspath(self.path)))
@@ -126,9 +128,13 @@ class PATHACTION_OT_copy_alternative_path(bpy.types.Operator):
         #     relative = path_obj.relative_to(blend_path.parent)
         #     self.pathes.append(('Relative to Blend', str(relative)))
         ## wip /
+        
 
-        self.pathes.append(('Name', path_obj.name))
-        self.pathes.append(('Stem', path_obj.stem))
+        ## Get name and stem using bpy.path as pathlib can be problematic with path starting with // (add an extra `/`)
+        if name := bpy.path.basename(self.path):
+            self.pathes.append(('Name', name))
+        if (stem := bpy.path.display_name_from_filepath(self.path)) and stem != name:
+            self.pathes.append(('Stem', stem))
 
         maxlen = max(len(l[1]) for l in self.pathes)
         popup_width = 800 
@@ -251,11 +257,12 @@ class PATH_OT_copy_blend_path(Operator):
             self.pathes.append(('Resolved', str(resolved)))
             self.pathes.append(('Resolved Parent', str(resolved.parent)))
 
-        self.pathes.append(('Name', path_obj.name))
+        if path_obj.name:
+            self.pathes.append(('Name', path_obj.name))
         
-        ## Show stem if different from name
-        if path_obj.stem != path_obj.name:
-            self.pathes.append(('Stem', path_obj.stem))
+            ## Show stem only if different from name
+            if path_obj.stem != path_obj.name:
+                self.pathes.append(('Stem', path_obj.stem))
 
         maxlen = max(len(l[1]) for l in self.pathes)
         popup_width = 800 
@@ -310,7 +317,7 @@ class PATH_OT_open_filepath_folder(Operator):
     def execute(self, context):
         try: #handle error if context isn't filebrowser (if operator is launched from search)
             folder = context.space_data.params.directory #give the path, params.filename give the tail (file)
-            openFolder(folder.decode())
+            open_folder(folder.decode())
         except:
             self.report({'WARNING'}, "Only works in fileBrowser context")
         return {"FINISHED"}
@@ -370,7 +377,7 @@ class PATH_OT_open_blend_folder(Operator):
             bpy.ops.wm.call_panel(name="PATHACTION_PT_blend_location_ui", keep_open=True)
             return {'FINISHED'}
 
-        openFolder(fileloc)
+        open_folder(fileloc)
 
         self.report({'INFO'}, "Blend's folder opened")
         return {'FINISHED'}
@@ -395,11 +402,11 @@ class PATH_OT_open_output_folder(Operator):
         
         if exists(folder):
             self.report({'INFO'}, "Open " + folder)
-            openFolder(folder)
+            open_folder(folder)
 
         elif exists(fhead):
            self.report({'INFO'}, "Open " + fhead)
-           openFolder(fhead)
+           open_folder(fhead)
 
         else:
             self.report({'INFO'}, "Can't open " + folder)
@@ -415,7 +422,7 @@ class PATH_OT_switch_path_operator(Operator):
     bl_options = {'REGISTER'}
     
     def execute(self, context):
-        compare = openFolder(False) # return "//" for windows, "/" for other OS
+        compare = open_folder(False) # return "//" for windows, "/" for other OS
         
         fpath = bpy.context.scene.render.filepath
         if fpath.startswith(compare):
