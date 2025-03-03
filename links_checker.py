@@ -2,7 +2,7 @@ import bpy
 import os
 import re
 from pathlib import Path
-from bpy.types import Operator, Panel
+from bpy.types import Operator, Panel, PropertyGroup
 
 ## Optional todo: Add a label displaying the number of users of a link (with an added shield icon if there is a fake user)
 
