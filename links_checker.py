@@ -147,6 +147,16 @@ class PATHACTION_OT_update_file_path(Operator):
             self.parent_dir = str(target_file.parent)
         return context.window_manager.invoke_props_dialog(self, width=600)
 
+        ## Message box: but can't pass filepath argument to the operator
+        # self.report({'WARNING'}, "Target path does not exists")
+        # message = [[f'Not found {self.target_path}', 'INFO'],
+        #             'Library was not replaced',
+        #             ]
+        #     message.append(['path.open_browser', 'You may want to open folder to inspect', 'FILE_FOLDER'])
+        
+        # fn.show_message_box(message, title='File not exists', icon='ERROR')
+        # return {'CANCELLED'}
+
     def draw(self, context):
         layout = self.layout
         layout.label(text=f"Not found: {self.target_path}")
@@ -556,7 +566,6 @@ class PATHACTION_OT_links_checker(bpy.types.Operator):
         # Apply search filter if text entered
         search_terms = self.search_field
         if search_terms:
-            print([item.path for item in list_collection])
             filtered_items = [item for item in filtered_items if search_terms.lower() in Path(item.path).name.lower()]
             
             if not filtered_items:
@@ -660,21 +669,21 @@ class PATHACTION_OT_links_checker(bpy.types.Operator):
                 open_path = item.valid_parent_path
                             
             # Special actions for blend files
-            if item.is_blend and item.is_valid:
-
-                # Show update button if available
-                if item.latest_version:
+            if item.is_blend:
+                if item.latest_version: # and item.is_valid 
+                    # Show update button if available
                     op = action_row.operator("pathaction.update_file_path", text="", icon='EMPTY_SINGLE_ARROW')
                     op.source_path = item.path
                     op.target_path = item.latest_version
-
                 else:
-                    ## Add placeholders for consistent spacing when no update is available
-                    # action_row.label(text="", icon='BLANK1')
+                    # Add placeholder when no update is available
                     action_row.label(text="", icon='BLANK1')
 
-                # Open in new instance
-                action_row.operator("wm.open_in_new_instance", text="", icon='FILE_BACKUP').filepath = open_path
+                # Open in new instance (only if valid)
+                if item.is_valid:
+                    action_row.operator("wm.open_in_new_instance", text="", icon='FILE_BACKUP').filepath = open_path
+                else:
+                    action_row.label(text="", icon='BLANK1')  # New instance placeholder
                 
                 # Path editing (only for blend files)
                 action_row.operator("pathaction.edit_file_path", text="", icon='GREASEPENCIL').source_path = item.path
