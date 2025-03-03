@@ -4,36 +4,7 @@ import re
 from pathlib import Path
 from bpy.types import Operator, Panel
 
-## TODO: Add Version update based on name:
-# - Add option to update path to latest version if any in directory (based on stem number suffix, needs to be at the end to be valid, )
-# - Operator to make the update check (don't make it automatically at invoke): Either for one or all
-# - Operator to actually update the path
-# - Note: need to store a reference to the library path somewhere... not sure if item can hold the property
-
-## TODO: Operator to edit a file path
-# - one to edit directly as string. Specify in the popup that, unlike relocate, Blend should be saved and reopen for the change to take effect... and that it's a good idea to increment before proceeding)
-# - one to open a file browser to select a new file to replace
-
-## TODO: Optional: Show icon based on file extension ? (maybe not needed for a chain icon since all are external link ? not sure))
-# - can compare extension using following functions:
-# - bpy.path.extensions_audio
-# - bpy.path.extensions_image
-# - bpy.path.extensions_movie
-
-
-## TODO: When path is a Blend:
-# - Check if the file is a blend file
-# - Add a button to open the blend file in place or in a new instance
-
-## TODO: Add possibility to reorder UI:
-# - By path validity (broken or not)
-# - By file type (blend, image, etc) ?
-
-## TODO: Add a label displaying the number of users of a link (with an added shield icon if there is a fake user)
-
-## TODO: Add an icon in the BlendFile outliner header to open the links checker
-
-## TODO: make the popup window width the size of the longest path (+ margin for all icons)
+## Optional todo: Add a label displaying the number of users of a link (with an added shield icon if there is a fake user)
 
 def get_file_icon(filepath):
     """Return an appropriate icon based on file extension"""
@@ -111,6 +82,86 @@ def is_data_packed(filepath):
                         return True
     return False
 
+def check_links(context):
+    """Check external file links and populate the path_list collection"""
+    wm = context.window_manager
+    
+    # Make sure the extended property group is used
+    if not hasattr(wm, "pa_path_list_extended"):
+        # The register function should have created this, but just in case
+        wm.pa_path_list_extended = []
+        
+    wm.pa_path_list_extended.clear()
+    
+    # Get all paths
+    viewed = []
+    wm.pa_links_stats.broken_count = 0
+    wm.pa_links_stats.absolute_count = 0
+    wm.pa_links_stats.relative_count = 0
+    
+    for current, lib in zip(bpy.utils.blend_paths(local=True), bpy.utils.blend_paths(absolute=True, local=True)):
+        # Avoid relisting same path multiple times
+        if current in viewed:
+            continue
+        viewed.append(current)
+        
+        try:
+            realib = Path(current)  # path as-is
+            lfp = Path(lib)  # absolute path
+            
+            item = wm.pa_path_list_extended.add()
+            item.path = current
+            item.is_checked = True
+            
+            # Check if it's a blend file
+            item.is_blend = current.lower().endswith('.blend')
+            
+            # Check if data is packed
+            item.is_packed = is_data_packed(current)
+            
+            # Check if path exists (skip if packed)
+            if item.is_packed:
+                item.is_valid = True
+                if current.startswith('//'):
+                    wm.pa_links_stats.relative_count += 1
+                    item.is_relative = True
+                else:
+                    wm.pa_links_stats.absolute_count += 1
+                    item.is_relative = False
+            elif not lfp.exists():
+                item.is_valid = False
+                wm.pa_links_stats.broken_count += 1
+                
+                # Try to find a valid parent path
+                for i in range(len(lfp.parts) - 2):
+                    parent = lfp.parents[i]
+                    if parent.exists():
+                        item.valid_parent_path = str(parent)
+                        break
+            else:
+                item.is_valid = True
+                if current.startswith('//'):
+                    wm.pa_links_stats.relative_count += 1
+                    item.is_relative = True
+                else:
+                    wm.pa_links_stats.absolute_count += 1
+                    item.is_relative = False
+                
+        except:
+            item = wm.pa_path_list_extended.add()
+            item.path = f'Error checking: {current}'
+            item.is_checked = True
+            item.is_valid = False
+            item.is_error_message = True
+            wm.pa_links_stats.broken_count += 1
+    
+    # Return the statistics for convenience
+    return {
+        'broken_count': wm.pa_links_stats.broken_count, 
+        'absolute_count': wm.pa_links_stats.absolute_count, 
+        'relative_count': wm.pa_links_stats.relative_count
+    }
+
 # User count functionality removed as requested
 
 class PATHACTION_OT_update_file_path(Operator):
@@ -123,16 +174,12 @@ class PATHACTION_OT_update_file_path(Operator):
     target_path: bpy.props.StringProperty(options={'SKIP_SAVE'})
 
     error : bpy.props.BoolProperty(name="Error", default=False, options={'SKIP_SAVE'})
+    refresh : bpy.props.BoolProperty(name="Refresh", default=True, options={'SKIP_SAVE'})
 
     @classmethod
     def description(cls, context, properties):
         return f"source: {properties.source_path}\
             \ntarget: {properties.target_path}"
-
-        # source_dir = os.path.dirname(properties.source_path)
-        # return f"Update files at {source_dir}:\
-        #     \n{os.path.basename(properties.source_path)}\
-        #     \n{os.path.basename(properties.target_path)}"
 
     def invoke(self, context, event):
         target_file = Path(bpy.path.abspath(self.target_path))
@@ -147,16 +194,6 @@ class PATHACTION_OT_update_file_path(Operator):
             self.parent_dir = str(target_file.parent)
         return context.window_manager.invoke_props_dialog(self, width=600)
 
-        ## Message box: but can't pass filepath argument to the operator
-        # self.report({'WARNING'}, "Target path does not exists")
-        # message = [[f'Not found {self.target_path}', 'INFO'],
-        #             'Library was not replaced',
-        #             ]
-        #     message.append(['path.open_browser', 'You may want to open folder to inspect', 'FILE_FOLDER'])
-        
-        # fn.show_message_box(message, title='File not exists', icon='ERROR')
-        # return {'CANCELLED'}
-
     def draw(self, context):
         layout = self.layout
         layout.label(text=f"Not found: {self.target_path}")
@@ -165,7 +202,6 @@ class PATHACTION_OT_update_file_path(Operator):
 
         layout.label(text="You may want to open folder to inspect", icon='INFO')
         layout.operator("path.open_browser", text=f"Open Folder", icon='FILE_FOLDER').filepath = self.parent_dir
-        # layout.operator("path.open_browser", text=f"Open {self.parent_dir}", icon='FILE_FOLDER').filepath = self.parent_dir
 
     def execute(self, context):
         if self.error:
@@ -197,15 +233,10 @@ class PATHACTION_OT_update_file_path(Operator):
                     item.name = new_lib_name
                 updated += 1
         
-        if updated:
+        if updated and self.refresh:
             self.report({'INFO'}, f"Updated {updated} references")
-            # # Refresh links checker if it's open
-            # try:
-            #     for area in context.screen.areas:
-            #         area.tag_redraw()
-            #     bpy.ops.pathaction.links_checker('INVOKE_DEFAULT')
-            # except:
-            #     pass
+            # Refresh links checker data
+            check_links(context)
             return {'FINISHED'}
         else:
             self.report({'WARNING'}, "No references found to update")
@@ -322,20 +353,19 @@ class PATHACTION_OT_update_to_latest_versions(Operator):
         
         for item in wm.pa_path_list_extended:
             if not item.is_error_message and item.latest_version:
-                bpy.ops.pathaction.update_file_path(source_path=item.path, target_path=item.latest_version)
+                ## Do not refresh after each update
+                bpy.ops.pathaction.update_file_path(source_path=item.path, target_path=item.latest_version, refresh=False)
                 updates_applied += 1
         
         if updates_applied:
             self.report({'INFO'}, f"Applied {updates_applied} update(s)")
-            bpy.ops.pathaction.links_checker('INVOKE_DEFAULT')
+            check_links(context)  # Refresh the link data
         else:
             self.report({'INFO'}, "No updates to apply")
             
         return {'FINISHED'}
 
-# Custom blend opener removed as requested
-
-class PATHACTION_PG_path_list_extended(bpy.types.PropertyGroup):
+class PATHACTION_PG_path_list_extended(PropertyGroup):
     path: bpy.props.StringProperty()
     is_checked: bpy.props.BoolProperty(default=False)
     is_valid: bpy.props.BoolProperty(default=False)
@@ -346,7 +376,12 @@ class PATHACTION_PG_path_list_extended(bpy.types.PropertyGroup):
     is_packed: bpy.props.BoolProperty(default=False)
     is_blend: bpy.props.BoolProperty(default=False)
 
-class PATHACTION_OT_links_checker(bpy.types.Operator):
+class PATHACTION_PG_links_stats(PropertyGroup):
+    broken_count: bpy.props.IntProperty(default=0)
+    absolute_count: bpy.props.IntProperty(default=0)
+    relative_count: bpy.props.IntProperty(default=0)
+
+class PATHACTION_OT_links_checker(Operator):
     bl_idname = "pathaction.links_checker"
     bl_label = "File Links Checker"
     bl_description = "Check states of external links in blend file"
@@ -377,7 +412,8 @@ class PATHACTION_OT_links_checker(bpy.types.Operator):
     )
     
     def invoke(self, context, event):
-        self.check_links(context)
+        # Call the external check_links function
+        check_links(context)
         
         # Calculate popup width based on longest path
         self.popup_width = 800  # default
@@ -395,87 +431,6 @@ class PATHACTION_OT_links_checker(bpy.types.Operator):
             pass
             
         return context.window_manager.invoke_props_dialog(self, width=self.popup_width)
-    
-    def check_links(self, context):
-        wm = context.window_manager
-        
-        # Make sure the extended property group is used
-        if not hasattr(wm, "pa_path_list_extended"):
-            # The register function should have created this, but just in case
-            wm.pa_path_list_extended = []
-            
-        wm.pa_path_list_extended.clear()
-        
-        # Get all paths
-        viewed = []
-        self.broken_count = 0
-        self.absolute_count = 0
-        self.relative_count = 0
-        
-        for current, lib in zip(bpy.utils.blend_paths(local=True), bpy.utils.blend_paths(absolute=True, local=True)):
-            # Avoid relisting same path multiple times
-            if current in viewed:
-                continue
-            viewed.append(current)
-            
-            try:
-                realib = Path(current)  # path as-is
-                lfp = Path(lib)  # absolute path
-                
-                item = wm.pa_path_list_extended.add()
-                item.path = current
-                item.is_checked = True
-                
-                # Check if it's a blend file
-                item.is_blend = current.lower().endswith('.blend')
-                
-                # Check if data is packed
-                item.is_packed = is_data_packed(current)
-                
-                # User count removed as requested
-                
-                # Check if path exists (skip if packed)
-                if item.is_packed:
-                    item.is_valid = True
-                    if current.startswith('//'):
-                        self.relative_count += 1
-                        item.is_relative = True
-                    else:
-                        self.absolute_count += 1
-                        item.is_relative = False
-                elif not lfp.exists():
-                    item.is_valid = False
-                    self.broken_count += 1
-                    
-                    # Try to find a valid parent path
-                    for i in range(len(lfp.parts) - 2):
-                        parent = lfp.parents[i]
-                        if parent.exists():
-                            item.valid_parent_path = str(parent)
-                            break
-                else:
-                    item.is_valid = True
-                    if current.startswith('//'):
-                        self.relative_count += 1
-                        item.is_relative = True
-                    else:
-                        self.absolute_count += 1
-                        item.is_relative = False
-                        
-                ## Check for newer version of the file (for blend files only)
-                ## Should not happen in invoke
-                # if item.is_blend and item.is_valid:
-                #     latest = get_latest_version(current)
-                #     if latest:
-                #         item.latest_version = latest
-                    
-            except:
-                item = wm.pa_path_list_extended.add()
-                item.path = f'Error checking: {current}'
-                item.is_checked = True
-                item.is_valid = False
-                item.is_error_message = True
-                self.broken_count += 1
     
     def sort_items(self, items):
         """Sort items based on current sort settings"""
@@ -515,19 +470,19 @@ class PATHACTION_OT_links_checker(bpy.types.Operator):
         
         # Header with statistics
         stats = []
-        if self.broken_count:
-            stats.append(f"{self.broken_count} broken")
-        if self.absolute_count:
-            stats.append(f"{self.absolute_count} absolute")
-        if self.relative_count:
-            stats.append(f"{self.relative_count} relative")
+        if wm.pa_links_stats.broken_count:
+            stats.append(f"{wm.pa_links_stats.broken_count} broken")
+        if wm.pa_links_stats.absolute_count:
+            stats.append(f"{wm.pa_links_stats.absolute_count} absolute")
+        if wm.pa_links_stats.relative_count:
+            stats.append(f"{wm.pa_links_stats.relative_count} relative")
         
         if stats:
             row = layout.row()
             row.label(text=" | ".join(stats))
             
             # Add missing files search options if there are broken links
-            if self.broken_count:
+            if wm.pa_links_stats.broken_count:
                 sub_row = row.row(align=True)
                 sub_row.label(text="Find missing:")
                 sub_row.operator('file.find_missing_files', text='All Files').directory = ''
@@ -724,12 +679,15 @@ class PATHACTION_PT_outliner_links_checker(Panel):
         layout.operator("pathaction.links_checker", text="Check File Links", icon='LINKED')
 
 def draw_outliner_header_button(self, context):
+    if context.space_data.display_mode != 'LIBRARIES':
+        return
     layout = self.layout
-    layout.separator()
+    # layout.separator()
     layout.operator("pathaction.links_checker", text="", icon='LINKED')
 
 classes = (
     PATHACTION_PG_path_list_extended,
+    PATHACTION_PG_links_stats,
     PATHACTION_OT_update_file_path,
     PATHACTION_OT_edit_file_path,
     PATHACTION_OT_replace_file_library,
@@ -743,8 +701,9 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     
-    # Create the extended path list property
+    # Create the property groups
     bpy.types.WindowManager.pa_path_list_extended = bpy.props.CollectionProperty(type=PATHACTION_PG_path_list_extended)
+    bpy.types.WindowManager.pa_links_stats = bpy.props.PointerProperty(type=PATHACTION_PG_links_stats)
     
     # Add button to outliner header
     bpy.types.OUTLINER_HT_header.append(draw_outliner_header_button)
@@ -753,8 +712,9 @@ def unregister():
     # Remove button from outliner header
     bpy.types.OUTLINER_HT_header.remove(draw_outliner_header_button)
     
-    # Remove the property
+    # Remove the properties
     del bpy.types.WindowManager.pa_path_list_extended
+    del bpy.types.WindowManager.pa_links_stats
     
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

@@ -5,6 +5,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [2.5.0] - 2025-03-03
+
+### Added
+
+Multiple feature to link checker:
+- When it's a blend, replace or edit (unlike relocate it just rewrite the filepath, blend needs to be saved and reopen for the library change to take effect)
+- Open blend in new instance
+- Look for updates
+
 ## [2.4.1] - 2025-02-28
 
 ### Added
