@@ -602,17 +602,17 @@ class PATHACTION_OT_links_checker(Operator):
             if not item.is_valid:
                 # Disabled row for broken links
                 path_row.enabled = False
-                path_row.operator('wm.path_open', text=item.path, emboss=False, icon=status_icon).filepath = item.path
+                path_row.operator('wm.path_open', text=item.path, emboss=False, icon=status_icon).filepath = abs_path
             else:
                 # For blend files, use open_mainfile
                 if item.is_blend:
                     op = path_row.operator('wm.open_mainfile', text=item.path, emboss=False, icon=status_icon)
-                    op.filepath = item.path
+                    op.filepath = abs_path
                     op.display_file_selector = False
                     op.load_ui = context.preferences.filepaths.use_load_ui
                 else:
                     # For other files, use path_open
-                    path_row.operator('wm.path_open', text=str(path), emboss=False, icon=status_icon).filepath = bpy.path.abspath(item.path)
+                    path_row.operator('wm.path_open', text=str(path), emboss=False, icon=status_icon).filepath = abs_path
             
             # Actions row with consistent spacing
             action_row = action_col.row(align=True)
@@ -636,7 +636,7 @@ class PATHACTION_OT_links_checker(Operator):
 
                 # Open in new instance (only if valid)
                 if item.is_valid:
-                    action_row.operator("wm.open_in_new_instance", text="", icon='FILE_BACKUP').filepath = open_path
+                    action_row.operator("wm.open_in_new_instance", text="", icon='FILE_BACKUP').filepath = abs_path
                 else:
                     action_row.label(text="", icon='BLANK1')  # New instance placeholder
                 
@@ -655,8 +655,9 @@ class PATHACTION_OT_links_checker(Operator):
                 action_row.label(text="", icon='BLANK1')  # Edit path placeholder
                 action_row.label(text="", icon='BLANK1')  # Browse path placeholder
 
-            ## Open and copy at the end
+            ## Open and copy at the end (always available)
             if open_path:
+                ## using open_path, as it can go to up several folder for broken links
                 action_row.operator("path.open_browser", text="", icon='FILE_FOLDER').filepath = os.path.abspath(bpy.path.abspath(open_path))
             else:
                 action_row.label(text="", icon='BLANK1')
