@@ -38,7 +38,9 @@ def get_latest_version(filepath):
         path_obj = Path(bpy.path.abspath(filepath))
         if not path_obj.exists():
             return None
-            
+        
+        # TODO: make version check a customizable pattern ?
+        
         # Find base name pattern (remove version numbers)
         stem = path_obj.stem
         # Match patterns like name_v001, name.001, name-001, etc.
@@ -301,7 +303,8 @@ class PATHACTION_OT_replace_file_library(Operator):
         col.label(text='(Relocate apply changes immediately)')
         col.label(text="To apply changes: Save and Reopen")
         col.separator()
-        col.label(text="Backup/increment first recommended", icon='INFO')
+        col.label(text="Use at your own risk", icon='INFO')
+        col.label(text="Recommended to Backup/increment first")
 
     def execute(self, context):
         if not self.source_path or not self.filepath:
