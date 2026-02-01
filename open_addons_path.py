@@ -27,7 +27,7 @@ def get_addon_location(fp) -> str:
 
     return 'other'
 
-def get_addons_modules_infos(filter="ALL"):
+def get_addons_modules_infos(filter="ALL", module_name_first=False):
     import addon_utils
 
     addon_list = []
@@ -53,19 +53,26 @@ def get_addons_modules_infos(filter="ALL"):
         if not diskname or not n or not fp:
             continue
         
-        # [0] diskpath, [1] bl_info name, [2] Diskname
-        addon_list.append((str(fp), n, diskname))
+        if module_name_first:
+            ## To return module name in enum choice (open preferences)
+            # [0] Diskname(modulename), [1] bl_info name, [2] diskpath
+            addon_list.append((diskname, n, str(fp)))
+        else:
+            ## To return path in enum choice (open path)
+            ## [0] diskpath, [1] bl_info name, [2] Diskname(modulename)
+            addon_list.append((str(fp), n, diskname))
         # module (can access m.bl_info['version']...etc)
         module_list.append(m)
 
     ## / treat duplicate name (check for infos on conflict)
-    # find duplicate indexes
+    # find duplicate indices
     namelist = [x[1] for x in addon_list]
     dup_index = list(set(i for i, x in enumerate(namelist) if namelist.count(x) > 1))
 
     # add version and location name
     for idx in dup_index:
-        loc = get_addon_location(addon_list[idx][0])
+        disk_path = addon_list[idx][2] if module_name_first else addon_list[idx][0] 
+        loc = get_addon_location(disk_path)
         version = str(module_list[idx].bl_info.get('version', '')).replace(" ", "").strip('()')
         # replace with new tuple
         addon_list[idx] = (addon_list[idx][0], f'{addon_list[idx][1]} ({loc} {version})', addon_list[idx][2])    
@@ -73,7 +80,9 @@ def get_addons_modules_infos(filter="ALL"):
     return addon_list
 
 def get_addon_list(self, context):
-    '''return (identifier, name, description) of enum content'''
+    '''return (identifier, name, description) of enum content
+    Get all addon found as ([0] diskpath, [1] bl_info name, [2] Diskname (modulename))
+    In enum prop item, return folderpath of the addon'''
     return get_addons_modules_infos()
 
 class PATH_OT_search_open_addon_path(Operator) :
@@ -103,13 +112,49 @@ class PATH_OT_search_open_addon_path(Operator) :
         return {'FINISHED'}
 
     def invoke(self, context, event):
-        all_addons_l = get_addons_modules_infos()
+        # all_addons_l = get_addons_modules_infos()
+        wm = context.window_manager
+        wm.invoke_search_popup(self)
+        return {'FINISHED'}
+
+
+def get_addon_enabled_module_name_list(self, context):
+    '''return (identifier, name, description) of enum content
+    Get all addon found as ([0] Diskname (modulename), [1] bl_info name, [2] diskpath)
+    In enum prop item, return module name of the addon, to open preferences'''
+    return get_addons_modules_infos(filter='ACTIVE', module_name_first=True)
+
+# Duplicate of above but to open preferences.
+class PATH_OT_search_open_addon_preferences(Operator) :
+    bl_idname = "path.search_open_addon_preferences"
+    bl_label = "Search And Open Addon Preferences"
+    bl_description = "Open chosen addon preferences (only enabled addons are listed)"
+    bl_options = {'REGISTER'}
+    # important to have the updated enum here as bl_property
+    bl_property = "addons_enum"
+
+    addons_enum : bpy.props.EnumProperty(
+        name="Addons",
+        description="Choose addon in list to open preferences",
+        items=get_addon_enabled_module_name_list
+        )
+
+    addons : bpy.props.StringProperty(default='', options={'SKIP_SAVE'}) # need to have a variable to store (to get it in self)
+
+    def execute(self, context):
+        chosen = self.addons_enum # chosen addon module name
+        self.report({'INFO'}, f'Open module preferences: {chosen}')
+        bpy.ops.preferences.addon_show(module=chosen)
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
         wm = context.window_manager
         wm.invoke_search_popup(self)
         return {'FINISHED'}
 
 classes = (
 PATH_OT_search_open_addon_path,
+PATH_OT_search_open_addon_preferences,
 )
 
 def register():

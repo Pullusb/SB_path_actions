@@ -283,8 +283,9 @@ class PATHACTION_OT_replace_file_library(Operator):
     bl_description = "Browse for a file to replace current library path"
     bl_options = {"REGISTER", "INTERNAL", "UNDO"}
     
-    source_path: bpy.props.StringProperty(options={'SKIP_SAVE', 'PATH_SUPPORTS_BLEND_RELATIVE'})
-    filepath: bpy.props.StringProperty(subtype='FILE_PATH', options={'PATH_SUPPORTS_BLEND_RELATIVE'})
+    options = {'SKIP_SAVE', 'PATH_SUPPORTS_BLEND_RELATIVE'} if bpy.app.version >= (4, 5, 0) else {'SKIP_SAVE'}
+    source_path: bpy.props.StringProperty(options=options)
+    filepath: bpy.props.StringProperty(subtype='FILE_PATH', options=options)
     
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
@@ -691,6 +692,8 @@ class PATHACTION_PT_outliner_links_checker(Panel):
         layout.operator("pathaction.links_checker", text="Check File Links", icon='LINKED')
 
 def draw_outliner_header_button(self, context):
+    if not bpy.context.preferences.addons[__package__].preferences.dev_mode:
+        return
     if context.space_data.display_mode != 'LIBRARIES':
         return
     layout = self.layout

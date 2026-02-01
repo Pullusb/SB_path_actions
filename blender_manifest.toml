@@ -14,7 +14,7 @@ license = ["SPDX:GPL-3.0-or-later"]
 website = "https://github.com/Pullusb/SB_path_actions"
 tags = ["System", "Development"]
 
-blender_version_min = "4.5.0"
+blender_version_min = "4.2.0"
 
 copyright = ["2017-2025 Samuel Bernou"]
 

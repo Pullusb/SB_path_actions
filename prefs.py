@@ -89,6 +89,8 @@ def blender_locations(layout):
     row = col.row(align=True)
     row.operator("wm.path_open", text='Temp Directory').filepath = temp_dir
     row.operator("pathaction.copy_path", text="", icon='COPYDOWN').path = temp_dir
+
+    col.operator("pathaction.links_checker", text="Check File Links", icon='LINKED') # Check Links 
     
     ## Temp directory of current session (not really useful)
     # session_temp_dir = bpy.app.tempdir
@@ -103,7 +105,8 @@ class PATH_addon_preferences(bpy.types.AddonPreferences):
     bl_label = "Addon Preferences"
 
     dev_mode : bpy.props.BoolProperty(name='Developer mode',
-        description='Add a button on upper-right corner to fully reopen blender with current file (not just revert)',
+        description='Add a button on upper-right corner to fully reopen blender with current file (not just revert)\
+            \nAdd features for developpers, TDs or advanced users (temp folder shortcut, link checker,...)',
         default=False)
 
     show_addon_open_buttons : bpy.props.BoolProperty(name='Addons Directory Shortcuts', default=False)

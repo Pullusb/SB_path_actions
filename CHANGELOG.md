@@ -9,16 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Set minimal version to 4.5.0 with the new arg for relative path author for string prop (fixs errors listing in console)
+- ensure compatibility with 4.5+ with the new arg for relative path in string property (fixs errors in console)
 - searchfield issue when path is '//../something.ext' where name will not be checked on Windows (viewed as UNC path)
 
 ### Added
 
+- New quick open addon preferences using a search field in main menu (`Alt + Click` on folder icon)
 - improved searchfield: Fallback search on path when nothing is found based on names
-<!-- 
+
 ### Changed
 
-- only expose link checker in devmode (This is for advanced user or TDs as it needs caution) -->
+- only expose `link checker` features with `dev mode` enabled (This is for advanced user or TDs as it needs to be used with caution)
 
 ## [2.5.0] - 2025-03-03
 

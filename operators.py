@@ -20,13 +20,13 @@ class PATHACTION_PT_blend_location_ui(Panel):
         layout = self.layout
         layout.operator("pathaction.blend_history", text="File History", icon='FILE_BLEND') # BLENDER
         layout.operator("path.copy_blend_path", text="Copy Formatted Blend Path", icon='COPYDOWN') # Copy Blend Path Format...
-        layout.operator("pathaction.links_checker", text="Check File Links", icon='LINKED') # Check Links 
         layout.separator()
         blender_locations(layout)
 
         ## Limit single addon search to dev mode ?
         # if bpy.context.preferences.addons[__package__].preferences.dev_mode:
-        layout.operator("path.open_addon_directory", text='Single Addon Directory', icon='VIEWZOOM') # PLUGIN
+        layout.operator("path.open_addon_directory", text='Single Addon Directory', icon='VIEWZOOM') # FILE_FOLDER
+        layout.operator("path.search_open_addon_preferences", text='Single Addon Preferences', icon='PREFERENCES') # PLUGIN
 
 class PATHACTION_OT_copy_text_to_clipboard(Operator):
     bl_idname = "pathaction.copy_text_to_clipboard"
