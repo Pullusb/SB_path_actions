@@ -5,6 +5,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [2.5.1] - 2026-02-01
+
+### Fixed
+
+- Set minimal version to 4.5.0 with the new arg for relative path author for string prop (fixs errors listing in console)
+- searchfield issue when path is '//../something.ext' where name will not be checked on Windows (viewed as UNC path)
+
+### Added
+
+- improved searchfield: Fallback search on path when nothing is found based on names
+<!-- 
+### Changed
+
+- only expose link checker in devmode (This is for advanced user or TDs as it needs caution) -->
+
 ## [2.5.0] - 2025-03-03
 
 ### Added

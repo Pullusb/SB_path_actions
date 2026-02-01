@@ -283,8 +283,8 @@ class PATHACTION_OT_replace_file_library(Operator):
     bl_description = "Browse for a file to replace current library path"
     bl_options = {"REGISTER", "INTERNAL", "UNDO"}
     
-    source_path: bpy.props.StringProperty(options={'SKIP_SAVE'})
-    filepath: bpy.props.StringProperty(subtype='FILE_PATH')
+    source_path: bpy.props.StringProperty(options={'SKIP_SAVE', 'PATH_SUPPORTS_BLEND_RELATIVE'})
+    filepath: bpy.props.StringProperty(subtype='FILE_PATH', options={'PATH_SUPPORTS_BLEND_RELATIVE'})
     
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
@@ -369,7 +369,7 @@ class PATHACTION_OT_update_to_latest_versions(Operator):
         return {'FINISHED'}
 
 class PATHACTION_PG_path_list_extended(PropertyGroup):
-    path: bpy.props.StringProperty()
+    path: bpy.props.StringProperty() # options={'PATH_SUPPORTS_BLEND_RELATIVE'}
     is_checked: bpy.props.BoolProperty(default=False)
     is_valid: bpy.props.BoolProperty(default=False)
     is_error_message: bpy.props.BoolProperty(default=False)
@@ -524,8 +524,16 @@ class PATHACTION_OT_links_checker(Operator):
         # Apply search filter if text entered
         search_terms = self.search_field
         if search_terms:
-            filtered_items = [item for item in filtered_items if search_terms.lower() in Path(item.path).name.lower()]
-            
+            ## Note: using '.removeprefix('//')' before using 'Path().name' because Pathlib starting with '//' considered as UNC path on Windows.
+            ## with only one parent ("//../some_file.ext"), last part is misinterpreted as being a folder (thus Path.name returns empty string)
+            filtered_items = [item for item in list_collection if search_terms.lower() in Path(item.path.removeprefix('//')).name.lower()]
+
+            # Nothing found in name, fall back in full path search ()
+            if not filtered_items:
+                filtered_items = [item for item in list_collection if search_terms.lower() in item.path.lower()]
+                if filtered_items:
+                    layout.label(text=f'Match path (nothing in names)', icon='INFO')
+
             if not filtered_items:
                 layout.label(text='Nothing found', icon='ERROR')
                 return
