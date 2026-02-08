@@ -5,6 +5,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [2.6.0] - 2026-02-08
+
+### Added
+
+- Path related actions in right-click context menu for outliner library: `open containing folder`, `copy path`. Also `open in new instance` in case of blend file library.
+
+### Changed
+
+- quick open addon preferences also show disabled addon (list all). prefix with enabled with 1, disabled with 0 for super fast filter in search.
+
 ## [2.5.1] - 2026-02-01
 
 ### Fixed

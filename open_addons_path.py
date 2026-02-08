@@ -43,8 +43,8 @@ def get_addons_modules_infos(filter="ALL", module_name_first=False):
 
         diskname, fp = res.group(1), Path(res.group(2))
         
+        installed, current = addon_utils.check(diskname)
         if filter != 'ALL':
-            installed, current = addon_utils.check(diskname)
             if filter == 'ACTIVE' and not current: # (installed or current)
                 continue
             elif filter == 'INACTIVE' and current: # (installed or current)
@@ -56,7 +56,18 @@ def get_addons_modules_infos(filter="ALL", module_name_first=False):
         if module_name_first:
             ## To return module name in enum choice (open preferences)
             # [0] Diskname(modulename), [1] bl_info name, [2] diskpath
-            addon_list.append((diskname, n, str(fp)))
+            display_name = n
+            if filter == 'ALL':
+                if current:
+                    ## show a number for status prefix
+                    ## a bit ugly, but can be used as ultra fast filter when typing
+                    display_name = '1 ' + display_name
+                    # display_name += ' (on)'
+                else:
+                    display_name = '0 ' + display_name
+                    # display_name += ' (off)'
+
+            addon_list.append((diskname, display_name, str(fp)))
         else:
             ## To return path in enum choice (open path)
             ## [0] diskpath, [1] bl_info name, [2] Diskname(modulename)
@@ -122,7 +133,7 @@ def get_addon_enabled_module_name_list(self, context):
     '''return (identifier, name, description) of enum content
     Get all addon found as ([0] Diskname (modulename), [1] bl_info name, [2] diskpath)
     In enum prop item, return module name of the addon, to open preferences'''
-    return get_addons_modules_infos(filter='ACTIVE', module_name_first=True)
+    return get_addons_modules_infos(module_name_first=True) # filter='ACTIVE' #  show only enabled ?
 
 # Duplicate of above but to open preferences.
 class PATH_OT_search_open_addon_preferences(Operator) :

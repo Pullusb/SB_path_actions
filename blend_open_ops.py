@@ -217,6 +217,73 @@ class PATH_OT_open_browser(Operator):
         self.report({'INFO'}, f'Open: {self.filepath}')
         return {"FINISHED"}
 
+## Debug function to print available context
+# def draw_my_menu_item_debug(self, context):
+#     print('\n--- context ---')
+#     for attr in dir(context):
+#         if not attr.startswith("_"):
+#             try:
+#                 val = getattr(context, attr)
+#                 if not callable(val):
+#                     print(f"{attr}: {val}")
+#             except:
+#                 pass
+
+def show_open_ops_on_outliner_entry(self, context):
+    if not getattr(context, 'id'):
+        # print('!! No ID in context') # Dbg
+        return
+    id = context.id
+    
+
+    id_type = id.bl_rna.name # type(id).__name__ 
+    ## Debugs exploring context id
+    # print('\nid: ', id)
+    # print(f"Clicked: {id.name}")
+    # print('id_type: ', id_type)
+    # print(f"Type: {id_type}")
+    # print(dir(id))
+
+    ## Only want items that have a filepath
+    if not getattr(id, 'filepath', None):
+        return
+    
+    ## Possibly Filter action by type
+    # if id_type.lower() not in ('library',):
+    #     return
+    
+    # print(f"Path: {id.filepath}") # Dbg
+
+    # if id.is_library_indirect:
+    #     print("Indirect linked data-block")
+    # elif id.is_embedded_data:
+    #     print("Embedded data-block")
+    # else:
+    #     print("Linked data-block")
+
+    ## Library/override info
+    # if id.library:
+    #     print(f"Linked from: {id.library.filepath}")
+    # if id.override_library:
+    #     print("Is a library override")
+
+    # self.layout.operator("my.operator", text=f"Do something with {id.name}")
+    path = id.filepath
+
+    layout = self.layout
+    layout.separator()
+    col = layout.column()
+
+    ## Get aboluste path
+    abs_path = os.path.abspath(bpy.path.abspath(str(path)))
+
+    col.operator('path.open_browser', text='Open Containing Folder', icon='FILE_FOLDER').filepath = abs_path
+    col.operator('pathaction.copy_path', icon='COPYDOWN').path = str(path)
+    if path.endswith('.blend'):
+        col.operator('wm.open_in_new_instance', icon='FILE_BACKUP').filepath = str(path)
+
+    self.layout.separator()
+
 classes = (
 PATH_OT_open_in_new_instance,
 PATH_OT_full_reopen,
@@ -228,6 +295,10 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
+    bpy.types.OUTLINER_MT_context_menu.append(show_open_ops_on_outliner_entry)
+
 def unregister():
+    bpy.types.OUTLINER_MT_context_menu.remove(show_open_ops_on_outliner_entry)
+
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
