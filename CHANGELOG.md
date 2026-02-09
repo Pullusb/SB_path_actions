@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- quick open addon preferences also show disabled addon (list all). prefix with enabled with 1, disabled with 0 for super fast filter in search.
+- quick open addon preferences also show disabled addon (list all). Prefix enabled with 1, disabled with 0 for super fast filter in search.
 
 ## [2.5.1] - 2026-02-01
 
