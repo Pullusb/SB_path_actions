@@ -246,7 +246,7 @@ class PATHACTION_OT_blend_history(Operator):
         options={'TEXTEDIT_UPDATE'}
         )
 
-    ## Not exposed, window cannot resize dynamically so full paths is always will always be shown truncated
+    ## Not exposed, window cannot resize dynamically so full paths will always be shown truncated
     show_full_path : bpy.props.BoolProperty(name='Show Full Path', default=False)
 
     def invoke(self, context, event):
@@ -272,6 +272,7 @@ class PATHACTION_OT_blend_history(Operator):
             return
 
         search_terms = self.search_field
+        path_result = []
         if search_terms:
             result = [item for item in list_collection if search_terms.lower() in Path(item.path).name.lower()]
 
@@ -281,7 +282,7 @@ class PATHACTION_OT_blend_history(Operator):
                 ## Try to fuzzy match against names in list
                 result = [item for item in list_collection if fuzzy_match_ratio(search_terms, Path(item.path).name) > 0.6]
                 detail = 'No exact matchs, showing close names'
-            
+
             if not result:
                 ## Try fuzzy match againts splitted parts of the names
                 result = [item for item in list_collection
@@ -289,29 +290,34 @@ class PATHACTION_OT_blend_history(Operator):
                               [fuzzy_match_ratio(search_terms, x) > 0.7 for x in re.split(r'-|_|\s', Path(item.path).name)]
                               )
                          ]
-                detail = 'No exact matchs, showing elements containing close parts'
+                detail = 'No exact matchs, showing elements containing close name parts'
+            ## End of additional fuzzy search //
 
-            if not result:
+            ## items matched by full path (only those not already matched by name)
+            path_result = [item for item in list_collection
+                           if item not in result 
+                           and search_terms.lower() in item.path.lower()]
+
+            if not result and not path_result:
                 layout.label(text='Nothing found', icon='ERROR')
                 return
-            
+
+            if not result:
+                detail = 'No match in names'
             if detail:
                 layout.label(text=detail, icon='INFO')
-            ## End of additional fuzzy search //
-    
+
             list_collection = result
 
         main_row = layout.row(align=True)
         blend_col = main_row.column(align=True)
         blend_col.alignment = 'LEFT'
 
-        # main_row.separator_spacer()
-        # main_row.separator()
         action_col = main_row.column(align=True)
         action_col.alignment = 'RIGHT'
 
-        col = layout.column(align=True)
-        for item in list_collection:
+        def draw_item(item):
+            """internal function to draw items in list"""
             blend_row = blend_col.row(align=True)
             action_row = action_col.row(align=True)
             action_row.alignment = 'RIGHT'
@@ -319,39 +325,39 @@ class PATHACTION_OT_blend_history(Operator):
             if item.is_error_message:
                 blend_row.label(text=item.path, icon='ERROR')
                 action_row.label(text='', icon='BLANK1')
-                continue
+                return
 
             blend = Path(item.path)
-
-            open_path = item.path
-            if not item.is_valid:
-                open_path = item.valid_parent_path
-
+            open_path = item.path if item.is_valid else item.valid_parent_path
             valid_icon = 'FILE_BLEND' if item.is_valid else 'LIBRARY_DATA_BROKEN' # FILE_HIDDEN
-            
-            # icon_row = row.row(align=True)
-            # icon_row.label(text='', icon=valid_icon)
-            # icon_row.alignment = 'LEFT'
 
             ## Label
             blend_row.alignment = 'LEFT'
-            # blend_row.label(text='', icon=valid_icon)
             blend_row.enabled = item.is_valid
-            # blend_row.ui_units_x = 25.0
-
-            display_text = item.path if self.show_full_path else blend.name            
+            display_text = item.path if self.show_full_path else blend.name
             op = blend_row.operator('wm.open_mainfile', text=display_text, emboss=False, icon=valid_icon)
             op.filepath = str(item.path)
             op.display_file_selector = False
             op.load_ui = context.preferences.filepaths.use_load_ui
 
-            ## Action buttons
+            ## Action buttonsŒ
             action_row.operator('path.open_browser', text='', icon='FILE_FOLDER').filepath = open_path
             action_row.operator('pathaction.copy_path', text='', icon='COPYDOWN').path = item.path
 
             sub_action_row = action_row.row(align=False)
             sub_action_row.operator('wm.open_in_new_instance', text='', icon='FILE_BACKUP').filepath = item.path
             sub_action_row.enabled = item.is_valid
+
+        for item in list_collection:
+            draw_item(item)
+
+        if search_terms and path_result:
+            blend_col.separator()
+            blend_col.label(text='Matches in paths to blends', icon='TRIA_DOWN')
+            action_col.separator()
+            action_col.label(text='')
+            for item in path_result:
+                draw_item(item)
 
     def execute(self, context):
         return {'FINISHED'}

@@ -529,7 +529,7 @@ class PATHACTION_OT_links_checker(Operator):
             ## with only one parent ("//../some_file.ext"), last part is misinterpreted as being a folder (thus Path.name returns empty string)
             filtered_items = [item for item in list_collection if search_terms.lower() in Path(item.path.removeprefix('//')).name.lower()]
 
-            # Nothing found in name, fall back in full path search ()
+            # Nothing found in name, fall back in full path search
             if not filtered_items:
                 filtered_items = [item for item in list_collection if search_terms.lower() in item.path.lower()]
                 if filtered_items:

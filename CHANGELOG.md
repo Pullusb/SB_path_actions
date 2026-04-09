@@ -5,6 +5,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [2.7.0] - 2026-04-09
+
+### Added
+
+- Custom history search shows match in blend paths when nothing found in name using exact or fuzzy search.
+
+
+
 ## [2.6.0] - 2026-02-08
 
 ### Added
