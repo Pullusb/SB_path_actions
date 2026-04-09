@@ -246,6 +246,8 @@ class PATHACTION_OT_blend_history(Operator):
         options={'TEXTEDIT_UPDATE'}
         )
 
+    expand_path_match : bpy.props.BoolProperty(name='Expand Path Match', default=True)
+
     ## Not exposed, window cannot resize dynamically so full paths will always be shown truncated
     show_full_path : bpy.props.BoolProperty(name='Show Full Path', default=False)
 
@@ -353,11 +355,17 @@ class PATHACTION_OT_blend_history(Operator):
 
         if search_terms and path_result:
             blend_col.separator()
-            blend_col.label(text='Matches in paths to blends', icon='TRIA_DOWN')
+            expand_icon = 'DISCLOSURE_TRI_DOWN' if self.expand_path_match else 'DISCLOSURE_TRI_RIGHT' # TRIA_DOWN, TRIA_RIGHT
+            
+            row = blend_col.row(align=True)
+            row.prop(self, 'expand_path_match', text='', icon=expand_icon, emboss=False)
+            row.label(text='Matches in paths to blends')
+
             action_col.separator()
             action_col.label(text='')
-            for item in path_result:
-                draw_item(item)
+            if self.expand_path_match:
+                for item in path_result:
+                    draw_item(item)
 
     def execute(self, context):
         return {'FINISHED'}
