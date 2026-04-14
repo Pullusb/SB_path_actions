@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-Error when opening a new instance using a relative filepath
+- Error when opening a new instance using a relative filepath
 
 ### Added
 
-`Alt + Click` on _open in new instance_ allow to open without extra arguments (tooltip shows when there are more)
+- `Alt + Click` on _open in new instance_ allow to open without extra arguments (tooltip shows when there are more)
+- Shows a `Copy Launch Command` option in folder icon Alt menu when dev mode is enabled.
 
 ## [2.7.0] - 2026-04-09
 

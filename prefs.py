@@ -1,4 +1,5 @@
 import bpy
+import sys
 import rna_keymap_ui
 from pathlib import Path
 import tempfile
@@ -15,6 +16,7 @@ def get_hotkey_entry_item(km, kmi_name, kmi_value, properties):
     return None
 
 def blender_locations(layout):
+    dev_mode = bpy.context.preferences.addons[__package__].preferences.dev_mode
     ### Addons
     # col.use_property_split = True
     layout.label(text='Browse Blender Folders', icon='FILE_FOLDER')
@@ -37,6 +39,10 @@ def blender_locations(layout):
 
     row = col.row(align=True)
     row.operator("pathaction.copy_path", text="Copy Blender Executable Path", icon='COPYDOWN').path = str(bin_path)
+    
+    if dev_mode:
+        row = col.row(align=True)
+        row.operator("pathaction.copy_text_to_clipboard", text="Copy Launch Command", icon='COPYDOWN').text = ' '.join(sys.argv)
 
     col.separator()
 
@@ -80,7 +86,7 @@ def blender_locations(layout):
                     row.operator("wm.path_open", text=s.name).filepath = str(Path(s.directory))
                     row.operator("pathaction.copy_path", text="", icon='COPYDOWN').path = str(Path(s.directory))
 
-    if not bpy.context.preferences.addons[__package__].preferences.dev_mode:
+    if not dev_mode:
         return
 
     col.separator()
