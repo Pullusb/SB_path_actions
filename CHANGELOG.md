@@ -5,13 +5,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [2.8.0] - 2026-04-14
+
+### Fixed
+
+Error when opening a new instance using a relative filepath
+
+### Added
+
+`Alt + Click` on _open in new instance_ allow to open without extra arguments (tooltip shows when there are more)
+
 ## [2.7.0] - 2026-04-09
 
 ### Added
 
 - Custom history search shows match in blend paths when nothing found in name using exact or fuzzy search.
-
-
 
 ## [2.6.0] - 2026-02-08
 

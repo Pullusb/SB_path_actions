@@ -1,6 +1,7 @@
 import bpy
 import os
 import re
+import sys
 from os.path import basename, dirname, join, exists
 from pathlib import Path
 import subprocess
@@ -12,13 +13,29 @@ from . import path_func
 class PATH_OT_open_in_new_instance(Operator) :
     bl_idname = "wm.open_in_new_instance"
     bl_label = 'Open Blend In New Instance'
-    bl_description = "Open blend file in a new instance of blender"
+    bl_description = "Open blend file in a new instance of blender\
+        \nAlt + Click : Strip extra arguments from initial command, opening with command [blender filepath]"
     bl_options = {"REGISTER", "INTERNAL"}
 
     filepath : bpy.props.StringProperty(default='', options={'SKIP_SAVE'})
+    strip_args : bpy.props.BoolProperty(default=False, options={'SKIP_SAVE'})
+
+    @classmethod
+    def description(cls, context, properties):
+        desc = "Open blend file in a new instance of blender"
+        if sys.argv and len(sys.argv) > 2:
+            str_cmd = ' '.join(sys.argv[2:])
+            desc += "\nAlt + Click : Strip extra arguments from initial command, opening with a simple [blender filepath]"
+            desc += "\n"
+            desc += f'\nExtra args: "{str_cmd}"'
+        return desc
+
+    def invoke(self, context, event):
+        self.strip_args = event.alt
+        return self.execute(context)
 
     def execute(self, context):
-        path_func.open_blend_new_instance(self.filepath)
+        path_func.open_blend_new_instance(self.filepath, strip_extra_args=self.strip_args)
         return {'FINISHED'}
 
 

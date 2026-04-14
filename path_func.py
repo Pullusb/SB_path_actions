@@ -1,7 +1,7 @@
 import bpy
 import sys
 import subprocess
-from os.path import isfile, dirname, normpath
+from os.path import isfile, dirname, normpath, abspath
 from shutil import which
 
 def open_folder(folderpath):
@@ -51,22 +51,37 @@ def open_folder(folderpath):
     subprocess.Popen(fullcmd)
     return ' '.join(fullcmd)
 
-def open_blend_new_instance(filepath=None):
+def open_blend_new_instance(filepath=None, strip_extra_args=False):
+    """Open the passed blend file in a new instance of blender
+    filepath (str): path to blend file, if None, will use current blend file
+    strip_extra_args (bool, default False): 
+        False: Replicate exactly original command with blend filepath
+        True: Command will be only [blender-binary filepath], stripping all initial args.
+
+    """
     filepath = filepath or bpy.data.filepath
-    
+
+    filepath = str(filepath)
+    if filepath.startswith('//'):
+        filepath = abspath(bpy.path.abspath(filepath))
+        print(filepath)
+
     cmd = sys.argv
 
     # If no filepath, use command as is to reopen blender
     if filepath != '':
         ## Sometimes filepath is not directly second argument
         if len(cmd) > 1 and next((arg for arg in cmd[1:] if arg.endswith('.blend')), None):
-            # Iterate and replace first occurence with current blend
+            # Iterate and replace first occurence with current blend``
             for i in range(1, len(cmd)):
                 if cmd[i].endswith('.blend'):
-                    cmd[i] = str(filepath)
+                    cmd[i] = filepath
                     break
         else:
-            cmd.insert(1, str(filepath))
+            cmd.insert(1, filepath)
+
+    if strip_extra_args:
+        cmd = [sys.argv[0], filepath]
 
     # print('cmd: ', cmd)
     system = sys.platform.lower()
