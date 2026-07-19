@@ -66,7 +66,8 @@ def open_blend_new_instance(filepath=None, strip_extra_args=False):
         filepath = abspath(bpy.path.abspath(filepath))
         print(filepath)
 
-    cmd = sys.argv
+    ## Copy to avoid mutating blender's own sys.argv
+    cmd = sys.argv.copy()
 
     # If no filepath, use command as is to reopen blender
     if filepath != '':

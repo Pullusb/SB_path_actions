@@ -143,7 +143,7 @@ class PATH_addon_preferences(bpy.types.AddonPreferences):
         km = kc.keymaps["Window"]
 
         col.label(text = "Pop up search/open blend history")
-        kmi = get_hotkey_entry_item(km, "path.open_from_history", "EXECUTE", "tab")
+        kmi = get_hotkey_entry_item(km, "pathaction.blend_history", "EXECUTE", "tab")
         if kmi:
             col.context_pointer_set("keymap", km)
             rna_keymap_ui.draw_kmi([], kc, km, kmi, col, 0)

@@ -107,7 +107,7 @@ class PATHACTION_OT_copy_alternative_path(bpy.types.Operator):
         ## Show resolved path if different
         if absolute != resolved:
             self.pathes.append(('Resolved', str(resolved)))
-            self.pathes.append(('Absolute Parent', str(resolved.parent)))
+            self.pathes.append(('Resolved Parent', str(resolved.parent)))
 
         ## TODO: If current Blend file is saved, also show relative path to blend (if path is not already relative)
         ## Moslty interesting for libraries (could be shown only if a dedicated operator prop is enabled)

@@ -12,15 +12,15 @@ def open_last_recent_file():
     history = Path(bpy.utils.user_resource('CONFIG')) / 'recent-files.txt'
     if history.exists():
         try:
-            # with open(history, 'r') as f:
             with history.open('r') as fd:
                 last_file = fd.readline().strip() # read first line of history txt file
-            if last_file:
-                bpy.ops.wm.open_mainfile(filepath=last_file, load_ui=True, use_scripts=True)
-            else:
-                return (1, 'error with recent-file.txt, may be empty : ' + history)
-        except:
-            return (1, 'error accessing recent-file.txt : ' + history)
+        except Exception:
+            return (1, f'error accessing recent-file.txt : {history}')
+
+        if last_file:
+            bpy.ops.wm.open_mainfile(filepath=last_file, load_ui=True, use_scripts=True)
+        else:
+            return (1, f'error with recent-file.txt, may be empty : {history}')
 
     else:
         return (1, 'error, "recent-file.txt" not found')
@@ -100,7 +100,7 @@ class PATH_OT_search_open_history(Operator) :
         blends = []
         try:
             with history.open('r') as fd:
-                blends = [fd.readline().strip() for line in fd]
+                blends = [line.strip() for line in fd]
         except:
             self.report({'ERROR'}, f'Error accessing recent-file.txt : {self.history}')
             return {'CANCELLED'}

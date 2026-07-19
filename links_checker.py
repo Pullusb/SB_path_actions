@@ -75,7 +75,7 @@ def get_latest_version(filepath):
 def is_data_packed(filepath):
     """Check if the data referenced by this filepath is packed into the blend"""
     # Check in various data collections
-    for datablock_type in ['images', 'sounds', 'movies', 'fonts', 'texts']:
+    for datablock_type in ['images', 'sounds', 'movieclips', 'fonts', 'texts']:
         if hasattr(bpy.data, datablock_type):
             collection = getattr(bpy.data, datablock_type)
             for item in collection:
@@ -87,12 +87,7 @@ def is_data_packed(filepath):
 def check_links(context):
     """Check external file links and populate the path_list collection"""
     wm = context.window_manager
-    
-    # Make sure the extended property group is used
-    if not hasattr(wm, "pa_path_list_extended"):
-        # The register function should have created this, but just in case
-        wm.pa_path_list_extended = []
-        
+
     wm.pa_path_list_extended.clear()
     
     # Get all paths

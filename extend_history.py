@@ -38,7 +38,7 @@ class PATH_OT_dump_history(Operator) :
         ext_history = tmp / 'blender_extended_history.txt'
         if ext_history.exists():
             with ext_history.open('r') as fd:
-                all_blends = [fd.readline().strip() for line in fd]
+                all_blends = [line.strip() for line in fd]
         
         # remove duplicate from existing extended history (bring existing to top)
         for l in blends:
