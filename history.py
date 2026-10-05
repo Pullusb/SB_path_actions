@@ -101,7 +101,7 @@ class PATH_OT_search_open_history(Operator) :
         try:
             with history.open('r') as fd:
                 blends = [line.strip() for line in fd]
-        except:
+        except Exception:
             self.report({'ERROR'}, f'Error accessing recent-file.txt : {self.history}')
             return {'CANCELLED'}
 

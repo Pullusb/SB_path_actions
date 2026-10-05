@@ -10,7 +10,8 @@ def open_folder(folderpath):
     with cmd relative to user's OS
     on window, select
     """
-    import subprocess
+    if not folderpath:
+        return
 
     myOS = sys.platform
     if myOS.startswith(('linux','freebsd')):
@@ -18,13 +19,8 @@ def open_folder(folderpath):
 
     elif myOS.startswith('win'):
         cmd = 'explorer'
-        if not folderpath:
-            return('/')
     else:
         cmd = 'open'
-
-    if not folderpath:
-        return('//')
 
     if isfile(folderpath): # When pointing to a file
         select = False
@@ -87,6 +83,7 @@ def open_blend_new_instance(filepath=None, strip_extra_args=False):
     # print('cmd: ', cmd)
     system = sys.platform.lower()
     if system.startswith('linux'):
+        # if which('gnome-terminal'): # not all desktops have gnome-terminal
         cmd = ['gnome-terminal', '--'] + cmd
     elif system.startswith('darwin'):
         cmd = ['open', '-W', '-a', 'Terminal.app'] + cmd

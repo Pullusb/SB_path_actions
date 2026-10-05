@@ -54,7 +54,6 @@ def replace_workspaces(source_blend):
     
     current_wks = [w for w in bpy.data.workspaces]
     for wk in current_wks:
-        print(wk.name)
         wk.name = f'{tmp}_{wk.name}'
 
     new_wks = load_workspaces(source_blend)
@@ -149,14 +148,18 @@ class PATH_OT_open_side_blend(Operator) :
 
     def invoke(self, context, event):
         ## list surrounding blends
-        self.blend_list = [Path(i.path) for i in os.scandir(Path(bpy.data.filepath).parent) if i.is_file() and i.name.endswith('.blend')]
+        try:
+            self.blend_list = [Path(i.path) for i in os.scandir(Path(bpy.data.filepath).parent) if i.is_file() and i.name.endswith('.blend')]
+        except OSError as e:
+            self.report({'ERROR'}, f'Cannot access blend folder: {e}')
+            return {'CANCELLED'}
 
         ## Best to list the file even if solo (that way can open another instance quickly)
-        # if len(self.blend_list) < 2:
-        #     self.report({"WARNING"}, 'No other blend file in current blend location !')
+        # if not self.blend_list:
+        #     self.report({'WARNING'}, 'No blend file found in current blend location !')
         #     return {'CANCELLED'}
-        
-        natural_sort = lambda x: [int(t) if t.isdigit() else t.lower() for t in re.split('(\d+)', x.name)]
+
+        natural_sort = lambda x: [int(t) if t.isdigit() else t.lower() for t in re.split(r'(\d+)', x.name)]
         try:
             self.blend_list.sort(key=natural_sort)
         except Exception:

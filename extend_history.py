@@ -22,9 +22,8 @@ class PATH_OT_dump_history(Operator) :
         try:
             # with open(history, 'r') as fd:
             with history.open('r') as fd:
-                # blends = [fd.readline().strip() for line in fd]
                 blends = [line.strip() for line in fd]
-        except:
+        except Exception:
             self.report({'ERROR'}, f'error accessing recent-file.txt : {history}')
             return {'CANCELLED'}
         if not blends:
@@ -87,8 +86,8 @@ class PATH_OT_restore_history(Operator) :
         except PermissionError:
             self.report({'ERROR'}, "Permission denied.")
         # For other errors
-        except:
-            self.report({'ERROR'}, "Error occurred while copying file.")
+        except Exception as e:
+            self.report({'ERROR'}, f"Error occurred while copying file: {e}")
 
         return {'CANCELLED'}
 

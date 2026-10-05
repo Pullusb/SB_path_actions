@@ -85,12 +85,11 @@ class PATHACTION_OT_copy_alternative_path(bpy.types.Operator):
             return {"CANCELLED"}
         self.pathes = []
 
-        print('self.path: ', self.path)
         try:
             path_obj = Path(self.path)
             absolute = Path(os.path.abspath(bpy.path.abspath(self.path)))
             resolved = Path(bpy.path.abspath(self.path)).resolve()
-        except:
+        except Exception:
             # case of invalid / non-accessable path
             bpy.context.window_manager.clipboard = self.path
             self.report({'INFO'}, f'Copied: {self.path}')
@@ -318,7 +317,7 @@ class PATH_OT_open_filepath_folder(Operator):
         try: #handle error if context isn't filebrowser (if operator is launched from search)
             folder = context.space_data.params.directory #give the path, params.filename give the tail (file)
             open_folder(folder.decode())
-        except:
+        except AttributeError:
             self.report({'WARNING'}, "Only works in fileBrowser context")
         return {"FINISHED"}
 

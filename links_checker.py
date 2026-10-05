@@ -52,7 +52,11 @@ def get_latest_version(filepath):
             
         # Look for other files with same base pattern
         versions = []
-        for file in path_obj.parent.glob(f"{base_pattern}*{path_obj.suffix}"):
+        # old direct filter: for file in path_obj.parent.glob(f"{base_pattern}*{path_obj.suffix}")
+        for file in path_obj.parent.iterdir():
+            # Iterate rather than using glob (pattern may contain glob special characters)
+            if not file.is_file() or file.suffix != path_obj.suffix or not file.stem.startswith(base_pattern):
+                continue
             # Match version number at the end of the filename
             match = re.search(r'[_.-]v?(\d+)$', file.stem)
             if match:
@@ -67,7 +71,7 @@ def get_latest_version(filepath):
             # return str(versions[0][1]) # file has been converted to abspath, here we want to keep current formatting
             ## Return dir path with updated file name
             return ''.join(re.split(r'([\\/])', filepath)[:-1]) + versions[0][1].name
-    except:
+    except Exception:
         pass
     
     return None
@@ -144,7 +148,8 @@ def check_links(context):
                     wm.pa_links_stats.absolute_count += 1
                     item.is_relative = False
                 
-        except:
+        except Exception as e:
+            print(f'Links checker, error checking "{current}": {e}')
             item = wm.pa_path_list_extended.add()
             item.path = f'Error checking: {current}'
             item.is_checked = True
@@ -181,7 +186,6 @@ class PATHACTION_OT_update_file_path(Operator):
     def invoke(self, context, event):
         target_file = Path(bpy.path.abspath(self.target_path))
         if target_file.exists():
-            print('OK:', target_file)
             return self.execute(context)
         
         self.error = True
@@ -311,7 +315,8 @@ class PATHACTION_OT_replace_file_library(Operator):
         if self.source_path.startswith('//') and bpy.data.is_saved:
             try:
                 self.filepath = bpy.path.relpath(self.filepath)
-            except:
+            except ValueError:
+                # Cannot be made relative (ex: different drive), keep absolute
                 pass
                 
         return bpy.ops.pathaction.update_file_path(source_path=self.source_path, target_path=self.filepath)
@@ -426,7 +431,7 @@ class PATHACTION_OT_links_checker(Operator):
                 char_width = 7  # pixels per character
                 button_width = 120  # space for buttons
                 self.popup_width = min(max(450, int(max_length * char_width + button_width)), 1200)
-        except:
+        except Exception:
             pass
             
         return context.window_manager.invoke_props_dialog(self, width=self.popup_width)

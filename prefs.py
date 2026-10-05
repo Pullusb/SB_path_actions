@@ -72,7 +72,7 @@ def blender_locations(layout):
     preferences = bpy.context.preferences
     if bpy.app.version < (3, 6, 0):
         external_scripts = preferences.filepaths.script_directory
-        if external_scripts and len(external_scripts) > 2:
+        if external_scripts:
             extern_script = str(Path(external_scripts))
             row = col.row(align=True)
             row.operator("wm.path_open", text='External Addons').filepath = extern_script
