@@ -5,6 +5,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [2.8.1] - 2026-11-02
+
+### Fixed
+
+- History search popup and extended history skipped some files in `recent-files.txt`
+- `Open in new instance` could alter blender's own launch arguments for later calls
+- Copy alternative path: resolved parent path was labeled `Absolute Parent`
+- Links checker: Add some missing datablocks
+- Other Minor fixes
+
+### Added
+
+- `Export To Blend` in outliner right-click menu (only with `dev mode` prefs enabled): write selected local datablocks (and dependencies) to an external blend using `bpy.data.libraries.write`. Compressed by default, with options for fake user, path remap and `Mark As Asset` (preview thumbnail is not generated if not mark before using)
+
 ## [2.8.0] - 2026-04-14
 
 ### Fixed
