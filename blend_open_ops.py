@@ -242,7 +242,6 @@ def get_exportable_ids(context):
             if i.library is None
             and not isinstance(i, (bpy.types.WindowManager, bpy.types.Screen, bpy.types.Library))]
 
-# TODO add option to mark as asset ?
 class PATH_OT_export_datablocks_to_blend(Operator):
     bl_idname = "path.export_datablocks_to_blend"
     bl_label = "Export To Blend"
@@ -257,6 +256,12 @@ class PATH_OT_export_datablocks_to_blend(Operator):
 
     fake_user : bpy.props.BoolProperty(name='Fake User', default=False,
         description='Set fake user on written datablocks')
+
+    mark_asset : bpy.props.BoolProperty(name='Mark As Asset', default=False,
+        description='Mark exported datablocks as assets in the written file\
+            \nOnly supported types (object, collection, material, node group, world, action, brush)\
+            \nPreview thumbnail is not generated (existing previews are kept)\
+            \nCurrent file is left unchanged')
 
     path_remap : bpy.props.EnumProperty(name='Path Remap', default='RELATIVE',
         description='How to handle external file paths',
@@ -287,10 +292,29 @@ class PATH_OT_export_datablocks_to_blend(Operator):
             self.report({'ERROR'}, 'No local datablock to export')
             return {'CANCELLED'}
 
+        if not self.filepath:
+            self.report({'ERROR'}, 'No filepath given')
+            return {'CANCELLED'}
+
         filepath = bpy.path.ensure_ext(bpy.path.abspath(self.filepath), '.blend')
         if bpy.data.filepath and Path(filepath) == Path(bpy.data.filepath):
             self.report({'ERROR'}, 'Cannot overwrite current blend file')
             return {'CANCELLED'}
+
+        ## Temporarily mark as asset, restored after write
+        ## (asset_mark/asset_clear also toggle fake user, so store its state)
+        restore = []
+        asset_count = 0
+        if self.mark_asset:
+            for id in datablocks:
+                if id.asset_data is not None:
+                    asset_count += 1
+                    continue
+                use_fake_user = id.use_fake_user
+                id.asset_mark()
+                if id.asset_data is not None: # unsupported types are not marked
+                    restore.append((id, use_fake_user))
+                    asset_count += 1
 
         try:
             bpy.data.libraries.write(filepath, set(datablocks),
@@ -300,8 +324,16 @@ class PATH_OT_export_datablocks_to_blend(Operator):
         except Exception as e:
             self.report({'ERROR'}, f'Export failed: {e}')
             return {'CANCELLED'}
+        finally:
+            for id, use_fake_user in restore:
+                id.asset_clear()
+                id.use_fake_user = use_fake_user
 
-        self.report({'INFO'}, f'Exported {len(datablocks)} datablock(s) to: {filepath}')
+        msg = f'Exported {len(datablocks)} datablock(s)'
+        if self.mark_asset:
+            msg += f' ({asset_count} as asset)'
+        level = 'WARNING' if self.mark_asset and asset_count < len(datablocks) else 'INFO'
+        self.report({level}, f'{msg} to: {filepath}')
         return {'FINISHED'}
 
 
@@ -312,7 +344,10 @@ def show_export_on_outliner_entry(self, context):
         return
     layout = self.layout
     layout.separator()
-    layout.operator('path.export_datablocks_to_blend', icon='EXPORT')
+    col = layout.column()
+    ## OUTLINER_MT_object is called with EXEC context, force invoke to get the file browser
+    col.operator_context = 'INVOKE_REGION_WIN'
+    col.operator('path.export_datablocks_to_blend', icon='EXPORT')
 
 
 def show_open_ops_on_outliner_entry(self, context):
