@@ -135,7 +135,7 @@ class PATH_OT_open_side_blend(Operator) :
     bl_idname = "wm.open_side_blend"
     bl_label = 'Open Side Blend'
     bl_description = "Open blend in same folder as current"
-    bl_options = {"REGISTER", "UNDO"}
+    bl_options = {"REGISTER"}
 
     @classmethod
     def poll(cls, context):
@@ -250,6 +250,8 @@ class PATH_OT_export_datablocks_to_blend(Operator):
 
     filepath : bpy.props.StringProperty(subtype='FILE_PATH', options={'SKIP_SAVE'})
     filter_glob : bpy.props.StringProperty(default='*.blend', options={'HIDDEN'})
+    ## Highlight filename in red in file browser when it already exists
+    check_existing : bpy.props.BoolProperty(default=True, options={'HIDDEN'})
 
     compress : bpy.props.BoolProperty(name='Compress', default=True,
         description='Write compressed blend file')

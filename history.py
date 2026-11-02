@@ -129,6 +129,16 @@ class PATH_OT_search_open_history(Operator) :
 
 version_enum_items = []
 
+def version_folder_sort_key(folder):
+    '''Sort key: folders starting with a version number first
+    (newest first, ex: "5.2" > "5.2_something" > "4.10" > "4.2")
+    then other folders by name
+    '''
+    match = re.match(r'(\d+)\.(\d+)', folder.name)
+    if match:
+        return (0, -int(match.group(1)), -int(match.group(2)), folder.name.lower())
+    return (1, 0, 0, folder.name.lower())
+
 def get_user_path_all_versions(self, context):
     '''Get enum of all user path of blender versions (current on top of the list)
     return list of tuple (path, folder_name, description)
@@ -139,9 +149,17 @@ def get_user_path_all_versions(self, context):
     # print('Triggered get_user_path_all_versions') # Dbg
     current_path = Path(bpy.utils.resource_path('USER'))
 
-    ## List all, reverse sorted and with current version moved on top
-    paths = [(str(p), p.name, '') for p in current_path.parent.iterdir() if p.name != current_path.name]
-    paths.reverse()
+    ## List all folders (including custom ones like "5.2_PROJ"), current version on top
+    version_folders = []
+    try:
+        for p in current_path.parent.iterdir():
+            if p.name != current_path.name and p.is_dir():
+                version_folders.append(p)
+    except OSError:
+        pass
+    version_folders.sort(key=version_folder_sort_key)
+
+    paths = [(str(p), p.name, '') for p in version_folders]
     paths.insert(0, (str(current_path), f'{current_path.name} (Current)', ''))
     version_enum_items = paths
     return version_enum_items
@@ -371,15 +389,6 @@ class PATHACTION_OT_blend_history(Operator):
     def execute(self, context):
         return {'FINISHED'}
 
-## Not possible to add on topbar menu
-# def extend_recent_file_menu(self, context):
-#     '''Extend the recent file menu with the operators'''
-#     layout = self.layout
-#     layout.separator()
-#     # layout.operator(PATH_OT_open_last_file.bl_idname, text='Open Last File', icon='FILE_BLEND')
-#     # layout.operator("path.open_from_history", text='Search in history', icon='FILE_BLEND')
-#     layout.operator("pathaction.blend_history", text='Advanced History', icon='FILE_BLEND')
-
 classes = (
 PATHACTION_PG_path_list,
 PATHACTION_OT_blend_history,
@@ -393,14 +402,7 @@ def register():
 
     bpy.types.WindowManager.pa_path_list = bpy.props.CollectionProperty(type=PATHACTION_PG_path_list)
 
-    ## Add to open recent "File > Open Recent" menu
-    # bpy.types.TOPBAR_MT_file_open_recent.append(extend_recent_file_menu) # not found
-    # bpy.types.TOPBAR_MT_file.append(extend_recent_file_menu) # Add to File menu ?
-
 def unregister():
-    # bpy.types.TOPBAR_MT_file.remove(extend_recent_file_menu)
-    # bpy.types.TOPBAR_MT_file_open_recent.remove(extend_recent_file_menu)
-
     del bpy.types.WindowManager.pa_path_list
 
     for cls in reversed(classes):

@@ -2,7 +2,7 @@ import bpy
 from pathlib import Path
 import os
 from bpy.types import Operator, Panel
-from os.path import dirname, basename, abspath, realpath, split, exists
+from os.path import dirname, abspath
 
 from .path_func import open_folder
 from .prefs import blender_locations
@@ -57,6 +57,9 @@ class PATHACTION_OT_copy_alternative_path(bpy.types.Operator):
 
     path : bpy.props.StringProperty(options={'SKIP_SAVE'})
 
+    ## Label entries as blend file ('Blend', 'Folder') instead of generic ('Path', 'Parent')
+    is_blend : bpy.props.BoolProperty(default=False, options={'SKIP_SAVE', 'HIDDEN'})
+
     # probe : bpy.props.BoolProperty(name="Probe",
     #     description="Check if path is valid",
     #     default=False, options={'SKIP_SAVE'})
@@ -95,8 +98,8 @@ class PATHACTION_OT_copy_alternative_path(bpy.types.Operator):
             self.report({'INFO'}, f'Copied: {self.path}')
             return self.execute(context)
 
-        self.pathes.append(('Path', self.path))
-        self.pathes.append(('Parent', dirname(self.path)))
+        self.pathes.append(('Blend' if self.is_blend else 'Path', self.path))
+        self.pathes.append(('Folder' if self.is_blend else 'Parent', dirname(self.path)))
 
         ## Show absolute path if different
         if absolute != path_obj:        
@@ -141,7 +144,8 @@ class PATHACTION_OT_copy_alternative_path(bpy.types.Operator):
             popup_width = 500
         elif maxlen > 100:
             popup_width = 1000
-        return context.window_manager.invoke_props_dialog(self, width=popup_width)
+        title = 'Copy Blend Path' if self.is_blend else self.bl_label
+        return context.window_manager.invoke_props_dialog(self, width=popup_width, title=title)
     
     def draw(self, context):
         layout = self.layout
@@ -220,81 +224,8 @@ class PATH_OT_copy_blend_path(Operator):
     def poll(cls, context):
         return bpy.data.is_saved
 
-    quote_style : bpy.props.EnumProperty(
-        name="Quote Style",
-        description="Choose the quote style",
-        items=(
-            ('PLAIN', "Plain", "No quotes", 0),
-            ('DOUBLE', "Double Quote", 'Wrap with "', 1),
-            ('SINGLE', "Single Quote", "Wrap with '", 2),
-            ('BACK', "Back Quote", "Wrap with `", 3)
-        ),
-        default='PLAIN',
-        # options={'SKIP_SAVE'}
-    )
-
     def invoke(self, context, event):
-        self.path = bpy.data.filepath
-        if not self.path:
-            return {"CANCELLED"}
-        self.pathes = []
-
-        path_obj = Path(self.path)
-        absolute = Path(os.path.abspath(bpy.path.abspath(self.path)))
-        resolved = Path(bpy.path.abspath(self.path)).resolve()
-
-        self.pathes.append(('Blend', self.path))
-        self.pathes.append(('Folder', dirname(self.path)))
-
-        ## Show absolute path if different
-        if absolute != path_obj:        
-            self.pathes.append(('Absolute', str(absolute)))
-            self.pathes.append(('Absolute Parent', str(absolute.parent)))
-
-        ## Show resolved path if different
-        if absolute != resolved:
-            self.pathes.append(('Resolved', str(resolved)))
-            self.pathes.append(('Resolved Parent', str(resolved.parent)))
-
-        if path_obj.name:
-            self.pathes.append(('Name', path_obj.name))
-        
-            ## Show stem only if different from name
-            if path_obj.stem != path_obj.name:
-                self.pathes.append(('Stem', path_obj.stem))
-
-        maxlen = max(len(l[1]) for l in self.pathes)
-        popup_width = 800 
-        if maxlen < 50:
-            popup_width = 500
-        elif maxlen > 100:
-            popup_width = 1000
-        return context.window_manager.invoke_props_dialog(self, width=popup_width)
-    
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = False
-
-        # with align True, path are probably too close visually
-        col = layout.column(align=False)
-        row = col.row()
-        # row.use_property_split = False # <- only on row
-        row.prop(self, 'quote_style', text='Quote Style', expand=True)
-
-        col.separator()
-
-        for action_name, filepath in self.pathes:
-
-            if self.quote_style == 'DOUBLE':
-                filepath = f'"{filepath}"'
-            elif self.quote_style == 'SINGLE':
-                filepath = f"'{filepath}'"
-            elif self.quote_style == 'BACK':
-                filepath = f"`{filepath}`"
-
-            split=col.split(factor=0.12, align=True)
-            split.operator('pathaction.copy_text_to_clipboard', text=action_name, icon='COPYDOWN').text = filepath
-            split.label(text=filepath)
+        return bpy.ops.pathaction.copy_alternative_path('INVOKE_DEFAULT', path=bpy.data.filepath, is_blend=True)
 
     def execute(self, context):
         return {"FINISHED"}
@@ -319,6 +250,7 @@ class PATH_OT_open_filepath_folder(Operator):
             open_folder(folder.decode())
         except AttributeError:
             self.report({'WARNING'}, "Only works in fileBrowser context")
+            return {"CANCELLED"}
         return {"FINISHED"}
 
 class PATH_OT_open_blend_folder(Operator):
@@ -390,26 +322,27 @@ class PATH_OT_open_output_folder(Operator):
     bl_options = {'REGISTER'}
     
     def execute(self, context):
-        outfileloc = bpy.context.scene.render.filepath # get filepath from blender
-        folder = dirname(outfileloc) # get last dir
+        scene = context.scene
+        if scene.render.filepath.startswith('//') and not bpy.data.is_saved:
+            self.report({'WARNING'}, "Blend not saved: Cannot resolve relative output path")
+            return {'CANCELLED'}
 
-        if folder.startswith("/"): #Convert root/relative path to absolute
-            folder = realpath(bpy.path.abspath(folder))
+        ## frame_path resolves path templates (ex: {blend_name}) and frame number tokens (####)
+        outfileloc = scene.render.frame_path(frame=scene.frame_current)
+        folder = dirname(abspath(bpy.path.abspath(outfileloc)))
 
-        fhead, _ftail = split(folder)
- 
-        
-        if exists(folder):
-            self.report({'INFO'}, "Open " + folder)
-            open_folder(folder)
+        ## Output folder may not be created yet (done at render time), go up to first existing parent
+        folder_path = Path(folder)
+        target = next((str(p) for p in (folder_path, *folder_path.parents) if p.exists()), None)
+        if target is None:
+            self.report({'WARNING'}, "Can't open " + folder)
+            return {'CANCELLED'}
 
-        elif exists(fhead):
-           self.report({'INFO'}, "Open " + fhead)
-           open_folder(fhead)
-
+        if target != folder:
+            self.report({'INFO'}, f"Not created yet: {folder}. Open {target}")
         else:
-            self.report({'INFO'}, "Can't open " + folder)
-
+            self.report({'INFO'}, "Open " + folder)
+        open_folder(target)
         return {'FINISHED'}
 
        

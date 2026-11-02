@@ -76,17 +76,46 @@ def get_latest_version(filepath):
     
     return None
 
-def is_data_packed(filepath):
-    """Check if the data referenced by this filepath is packed into the blend"""
+def get_packed_filepaths():
+    """Return the set of filepaths whose data is packed into the blend"""
+    packed = set()
     # Check in various data collections
     for datablock_type in ['images', 'sounds', 'movieclips', 'fonts', 'texts']:
-        if hasattr(bpy.data, datablock_type):
-            collection = getattr(bpy.data, datablock_type)
-            for item in collection:
-                if hasattr(item, 'filepath') and item.filepath == filepath:
-                    if hasattr(item, 'packed_file') and item.packed_file:
-                        return True
-    return False
+        collection = getattr(bpy.data, datablock_type, None)
+        if collection is None:
+            continue
+        for item in collection:
+            if getattr(item, 'packed_file', None) and getattr(item, 'filepath', None):
+                packed.add(item.filepath)
+    return packed
+
+## Tile tokens used by tiled images, mapped to the regex of what they stand for
+TILE_TOKENS = {
+    '<UDIM>': r'\d{4}',
+    '<UVTILE>': r'u\d+_v\d+',
+}
+
+def tiled_path_exists(filepath):
+    """For a path containing a tile token (ex: 'tex.<UDIM>.png'), return True if at least one tile exists"""
+    path_obj = Path(filepath)
+    pattern = re.escape(path_obj.name)
+    for token, token_pattern in TILE_TOKENS.items():
+        pattern = pattern.replace(re.escape(token), token_pattern)
+    try:
+        return any(re.fullmatch(pattern, f.name) for f in path_obj.parent.iterdir() if f.is_file())
+    except OSError:
+        return False
+
+def link_exists(filepath):
+    """Check if a resolved absolute path exists, handling tiled images tokens"""
+    if any(token in filepath for token in TILE_TOKENS):
+        return tiled_path_exists(filepath)
+    return Path(filepath).exists()
+
+def is_bundled_path(filepath):
+    """Return True if the resolved absolute path is inside Blender's install (ex: bundled essentials assets)"""
+    local_root = os.path.normcase(os.path.abspath(bpy.utils.resource_path('LOCAL')))
+    return os.path.normcase(os.path.abspath(filepath)).startswith(local_root + os.sep)
 
 def check_links(context):
     """Check external file links and populate the path_list collection"""
@@ -95,30 +124,31 @@ def check_links(context):
     wm.pa_path_list_extended.clear()
     
     # Get all paths
-    viewed = []
+    viewed = set()
+    packed_filepaths = get_packed_filepaths()
     wm.pa_links_stats.broken_count = 0
     wm.pa_links_stats.absolute_count = 0
     wm.pa_links_stats.relative_count = 0
-    
+    wm.pa_links_stats.bundled_count = 0
+
     for current, lib in zip(bpy.utils.blend_paths(local=True), bpy.utils.blend_paths(absolute=True, local=True)):
         # Avoid relisting same path multiple times
         if current in viewed:
             continue
-        viewed.append(current)
-        
+        viewed.add(current)
+
         try:
-            realib = Path(current)  # path as-is
             lfp = Path(lib)  # absolute path
-            
+
             item = wm.pa_path_list_extended.add()
             item.path = current
             item.is_checked = True
-            
+
             # Check if it's a blend file
             item.is_blend = current.lower().endswith('.blend')
-            
+
             # Check if data is packed
-            item.is_packed = is_data_packed(current)
+            item.is_packed = current in packed_filepaths
             
             # Check if path exists (skip if packed)
             if item.is_packed:
@@ -129,7 +159,7 @@ def check_links(context):
                 else:
                     wm.pa_links_stats.absolute_count += 1
                     item.is_relative = False
-            elif not lfp.exists():
+            elif not link_exists(lib):
                 item.is_valid = False
                 wm.pa_links_stats.broken_count += 1
                 
@@ -141,13 +171,18 @@ def check_links(context):
                         break
             else:
                 item.is_valid = True
-                if current.startswith('//'):
+                if is_bundled_path(lib):
+                    ## Shipped with Blender (ex: essentials brushes), not a user link
+                    ## Checked first: Blender may store it relative to the blend (//../../app/datafiles/...)
+                    wm.pa_links_stats.bundled_count += 1
+                    item.is_bundled = True
+                elif current.startswith('//'):
                     wm.pa_links_stats.relative_count += 1
                     item.is_relative = True
                 else:
                     wm.pa_links_stats.absolute_count += 1
                     item.is_relative = False
-                
+
         except Exception as e:
             print(f'Links checker, error checking "{current}": {e}')
             item = wm.pa_path_list_extended.add()
@@ -161,7 +196,8 @@ def check_links(context):
     return {
         'broken_count': wm.pa_links_stats.broken_count, 
         'absolute_count': wm.pa_links_stats.absolute_count, 
-        'relative_count': wm.pa_links_stats.relative_count
+        'relative_count': wm.pa_links_stats.relative_count,
+        'bundled_count': wm.pa_links_stats.bundled_count,
     }
 
 # User count functionality removed as requested
@@ -379,11 +415,13 @@ class PATHACTION_PG_path_list_extended(PropertyGroup):
     latest_version: bpy.props.StringProperty(default="")
     is_packed: bpy.props.BoolProperty(default=False)
     is_blend: bpy.props.BoolProperty(default=False)
+    is_bundled: bpy.props.BoolProperty(default=False) # Inside Blender install (ex: essentials assets)
 
 class PATHACTION_PG_links_stats(PropertyGroup):
     broken_count: bpy.props.IntProperty(default=0)
     absolute_count: bpy.props.IntProperty(default=0)
     relative_count: bpy.props.IntProperty(default=0)
+    bundled_count: bpy.props.IntProperty(default=0)
 
 class PATHACTION_OT_links_checker(Operator):
     bl_idname = "pathaction.links_checker"
@@ -445,7 +483,7 @@ class PATHACTION_OT_links_checker(Operator):
         elif self.sort_by == 'TYPE':
             sorted_items = sorted(items, key=lambda x: os.path.splitext(x.path)[1].lower(), reverse=self.reverse_sort)
         else:  # 'STATUS'
-            # Status priority: broken, packed, blend with update, relative, absolute
+            # Status priority: broken, packed, blend with update, relative, absolute, bundled
             def status_key(x):
                 if not x.is_valid:
                     return 0  # Broken first
@@ -455,6 +493,8 @@ class PATHACTION_OT_links_checker(Operator):
                     return 2  # Then blend with updates
                 elif x.is_relative:
                     return 3  # Then relative
+                elif x.is_bundled:
+                    return 5  # Bundled with Blender last
                 else:
                     return 4  # Then absolute
             
@@ -480,6 +520,8 @@ class PATHACTION_OT_links_checker(Operator):
             stats.append(f"{wm.pa_links_stats.absolute_count} absolute")
         if wm.pa_links_stats.relative_count:
             stats.append(f"{wm.pa_links_stats.relative_count} relative")
+        if wm.pa_links_stats.bundled_count:
+            stats.append(f"{wm.pa_links_stats.bundled_count} bundled")
         
         if stats:
             row = layout.row()
@@ -584,6 +626,8 @@ class PATHACTION_OT_links_checker(Operator):
                     current_status = "update"
                 elif item.is_relative:
                     current_status = "relative"
+                elif item.is_bundled:
+                    current_status = "bundled"
                 else:
                     current_status = "absolute"
                 
@@ -603,6 +647,8 @@ class PATHACTION_OT_links_checker(Operator):
                 status_icon = 'FILE_REFRESH'
             elif item.is_relative:
                 status_icon = 'LINKED'
+            elif item.is_bundled:
+                status_icon = 'BLENDER'
             else:
                 status_icon = get_file_icon(abs_path)
             

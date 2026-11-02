@@ -5,15 +5,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
-## [2.8.1] - 2026-11-02
+## [2.9.0] - 2026-11-02
 
 ### Fixed
 
 - History search popup and extended history skipped some files in `recent-files.txt`
 - `Open in new instance` could alter blender's own launch arguments for later calls
 - Copy alternative path: resolved parent path was labeled `Absolute Parent`
-- Links checker: Add some missing datablocks
-- Other Minor fixes
+- Links checker: Add missing datablocks, tiled images (`<UDIM>`, `<UVTILE>`) were always reported broken, now valid if at least one tile exists.
+- `Open output folder` now resolves path templates (ex: `{blend_name}`) and frame number tokens
+- Under Linux, `Open in new instance` launch blender directly if `gnome-terminal` is not installed
+- Minor fixes
+
+### Changed
+
+- Links checker: paths to assets bundled (like essentials brushes) are counted as `bundled` instead of absolute (show Blender icon and listed last)
+- Open folder on a file now select it in macOS Finder (`open -R`) and Linux Dolphin (`dolphin --select`)
+- `Export To Blend` file browser warns before overwriting an existing file
 
 ### Added
 
