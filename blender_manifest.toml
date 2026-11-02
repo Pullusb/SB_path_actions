@@ -16,7 +16,7 @@ tags = ["System", "Development"]
 
 blender_version_min = "4.2.0"
 
-copyright = ["2017-2025 Samuel Bernou"]
+copyright = ["2017-2026 Samuel Bernou"]
 
 [permissions]
 files = "Open folders, List Blend files"

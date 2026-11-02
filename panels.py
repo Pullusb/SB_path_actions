@@ -70,60 +70,14 @@ class PATH_PT_top_filebrowser_ui(bpy.types.Panel):
         row.operator(
             "path.open_filepath", text="Open Folder",
             icon="FILE_FOLDER")
-        
-        ''' #using grid
-        row = layout.row()
-        flow = row.grid_flow(row_major=False, columns=0, even_columns=False, even_rows=False, align=True)
-        subrow = flow.row()
-        subsubrow = subrow.row(align=True)
-        if bpy.data.filepath:
-            subsubrow.operator(
-                'path.browser_to_blend_folder', text='Blend Location',
-                icon="FILE_BACKUP") # DESKTOP
-        
-        subsubrow.operator(
-        "path.open_filepath",
-        text="Open Folder",
-        icon="FILE_FOLDER")
-        '''
 
-
-### Output panel (DISABLED)
-""" 
-def PathActionsPanel(self, context):
-    layout = self.layout
-    layout.use_property_split = True 
-
-    '''##Button aligned to right (as large as containing text)
-    row = layout.row(align=False)
-    row.alignment = 'RIGHT'
-    row.operator("path.open_output", text = "Open Output folder", icon = 'FILE_FOLDER')
-    row.operator("path.switch_output_path_mode", text = "Toggle path mode", icon = 'PARTICLE_PATH')
-    '''
-
-    ### Button aligned with properties
-    col = layout.split()
-    #Disable col.label to get a full large button
-    col.label(text="Open")#Labeled like a propertie
-    #col.label(text="")#Hack to align with properties 
-    col.operator("path.open_output", text = "Output folder", icon = 'FILE_FOLDER')
-    
-    ###button for toggle path mode (a bit useless, access via search bar is better)
-    # col = layout.split()
-    # col.label(text="")
-    # col.operator("path.switch_output_path_mode", text = "Toggle path mode", icon = 'PARTICLE_PATH')
- """
 
 def register():
     # bpy.types.FILEBROWSER_HT_header.append(BrowserPathActionsButtons)
     bpy.types.TOPBAR_HT_upper_bar.append(TopBarOpenButton)
     bpy.utils.register_class(PATH_PT_top_filebrowser_ui)
-    
-    # bpy.types.RENDER_PT_output.append(PathActionsPanel)
 
 def unregister():
     bpy.utils.unregister_class(PATH_PT_top_filebrowser_ui)
     # bpy.types.FILEBROWSER_HT_header.remove(BrowserPathActionsButtons)
     bpy.types.TOPBAR_HT_upper_bar.remove(TopBarOpenButton)
-    
-    # bpy.types.RENDER_PT_output.remove(PathActionsPanel)
