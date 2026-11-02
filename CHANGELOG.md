@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Open side blend` popup shows modification date, with a `Name` vs `Date` sort toggle on top
 - Copy alternative path popup:
     - `Relative` and `Relative Parent` entries: path relative to current blend (when saved and path is not already relative)
     - `Slash Style` (`As is`, `Forward Slash` or `Escaped`). Only shown when paths contain backslashes)

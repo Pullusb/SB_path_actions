@@ -137,14 +137,24 @@ class PATH_OT_open_side_blend(Operator) :
     bl_description = "Open blend in same folder as current"
     bl_options = {"REGISTER"}
 
+    sort_by : bpy.props.EnumProperty(
+        name="Sort By",
+        items=(
+            ('NAME', "Name", "Sort by name", 'SORTALPHA', 0),
+            ('DATE', "Date", "Sort by modification date, last saved on top", 'SORTTIME', 1),
+        ),
+        default='NAME',
+    )
+
     @classmethod
     def poll(cls, context):
         return bpy.data.is_saved
 
     def invoke(self, context, event):
-        ## list surrounding blends
+        ## list surrounding blends with their modification time
         try:
-            self.blend_list = [Path(i.path) for i in os.scandir(Path(bpy.data.filepath).parent) if i.is_file() and i.name.endswith('.blend')]
+            self.mtimes = {Path(i.path): i.stat().st_mtime for i in os.scandir(Path(bpy.data.filepath).parent) if i.is_file() and i.name.endswith('.blend')}
+            self.blend_list = list(self.mtimes)
         except OSError as e:
             self.report({'ERROR'}, f'Cannot access blend folder: {e}')
             return {'CANCELLED'}
@@ -162,9 +172,9 @@ class PATH_OT_open_side_blend(Operator) :
         
         ## Adapt panel size to longest name... (Not predictable, font is not monospace)
         self.longest_path = max([len(i.name) for i in self.blend_list])
-        estimated = int(self.longest_path * 8.8)
-        popup_width = max(250, estimated) # low clamp
-        popup_width = min(popup_width, 520) # high clamp
+        estimated = int(self.longest_path * 8.8) + 70 # + date column
+        popup_width = max(370, estimated) # low clamp
+        popup_width = min(popup_width, 600) # high clamp
 
         # print('longest_path:', self.longest_path)# Dbg
         # print('estimated width: ', estimated)# Dbg
@@ -176,9 +186,14 @@ class PATH_OT_open_side_blend(Operator) :
 
     def draw(self, context):
         layout = self.layout
+        layout.row().prop(self, 'sort_by', expand=True)
+
         main_row = layout.row(align=True)
         blend_col = main_row.column(align=True)
         blend_col.alignment = 'LEFT'
+
+        date_col = main_row.column(align=True)
+        date_col.alignment = 'RIGHT'
 
         # main_row.separator_spacer()
         # main_row.separator()
@@ -186,7 +201,11 @@ class PATH_OT_open_side_blend(Operator) :
         option_col.alignment = 'RIGHT'
         # option_col.ui_units_x = 2.2
 
-        for path in self.blend_list:
+        blend_list = self.blend_list
+        if self.sort_by == 'DATE':
+            blend_list = sorted(blend_list, key=lambda x: self.mtimes[x], reverse=True)
+
+        for path in blend_list:
             blend_row = blend_col.row()
             blend_row.alignment = 'LEFT'
             
@@ -201,7 +220,12 @@ class PATH_OT_open_side_blend(Operator) :
                 op.filepath = str(path)
                 op.display_file_selector = False # adding this arg (True or False) display the warning correctly when file is not saved
                 op.load_ui = context.preferences.filepaths.use_load_ui
-            
+
+            date_row = date_col.row()
+            date_row.alignment = 'RIGHT'
+            date_row.active = False # greyed, secondary info
+            date_row.label(text=time.strftime('%Y-%m-%d %H:%M', time.localtime(self.mtimes[path])))
+
             # option_row = option_col.box()
             option_row = option_col.row(align=True)
             option_row.alignment = 'RIGHT'
