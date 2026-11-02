@@ -2,7 +2,7 @@ import bpy
 from pathlib import Path
 import os
 from bpy.types import Operator, Panel
-from os.path import dirname, basename, realpath, split, exists
+from os.path import dirname, basename, abspath, realpath, split, exists
 
 from .path_func import open_folder
 from .prefs import blender_locations
@@ -421,13 +421,15 @@ class PATH_OT_switch_path_operator(Operator):
     bl_options = {'REGISTER'}
     
     def execute(self, context):
-        compare = open_folder(False) # return "//" for windows, "/" for other OS
-        
-        fpath = bpy.context.scene.render.filepath
-        if fpath.startswith(compare):
-            bpy.context.scene.render.filepath = realpath(bpy.path.abspath(fpath))
+        fpath = context.scene.render.filepath
+        if fpath.startswith('//'):
+            ## Blender relative path prefix (same on all OS)
+            context.scene.render.filepath = abspath(bpy.path.abspath(fpath))
         else:
-            bpy.context.scene.render.filepath = bpy.path.relpath(fpath)
+            if not bpy.data.is_saved:
+                self.report({'WARNING'}, "Blend not saved: Cannot make path relative")
+                return {'CANCELLED'}
+            context.scene.render.filepath = bpy.path.relpath(fpath)
 
         return {'FINISHED'}
 

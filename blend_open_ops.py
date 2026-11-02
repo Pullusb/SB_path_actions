@@ -101,11 +101,6 @@ class PATH_OT_full_reopen(Operator) :
         \nCtrl: Force reopen even if file is not saved"
     bl_options = {"REGISTER", "INTERNAL"}
 
-    @classmethod
-    def poll(cls, context):
-        return True
-        return bpy.data.is_saved #only if file is saved?
-
     def invoke(self, context, event):
         ## Alt action : Replace workspaces by appending startup and removing current
         ## TODO: Can crash, need testing before implementation.
@@ -237,6 +232,89 @@ class PATH_OT_open_browser(Operator):
         self.report({'INFO'}, f'Open: {self.filepath}')
         return {"FINISHED"}
 
+def get_exportable_ids(context):
+    '''Return local datablocks selected in outliner (fallback on hovered id)'''
+    ids = list(getattr(context, 'selected_ids', None) or [])
+    hovered = getattr(context, 'id', None)
+    if hovered is not None and hovered not in ids:
+        ids.append(hovered)
+    return [i for i in ids
+            if i.library is None
+            and not isinstance(i, (bpy.types.WindowManager, bpy.types.Screen, bpy.types.Library))]
+
+# TODO add option to mark as asset ?
+class PATH_OT_export_datablocks_to_blend(Operator):
+    bl_idname = "path.export_datablocks_to_blend"
+    bl_label = "Export To Blend"
+    bl_description = "Write selected local datablocks (and their dependencies) to an external blend file"
+    bl_options = {"REGISTER", "INTERNAL"}
+
+    filepath : bpy.props.StringProperty(subtype='FILE_PATH', options={'SKIP_SAVE'})
+    filter_glob : bpy.props.StringProperty(default='*.blend', options={'HIDDEN'})
+
+    compress : bpy.props.BoolProperty(name='Compress', default=True,
+        description='Write compressed blend file')
+
+    fake_user : bpy.props.BoolProperty(name='Fake User', default=False,
+        description='Set fake user on written datablocks')
+
+    path_remap : bpy.props.EnumProperty(name='Path Remap', default='RELATIVE',
+        description='How to handle external file paths',
+        items=(
+            ('NONE', 'None', 'No path manipulation'),
+            ('RELATIVE', 'Relative', 'Remap paths that are already relative to the new location'),
+            ('RELATIVE_ALL', 'Relative All', 'Remap all paths to be relative to the new location'),
+            ('ABSOLUTE', 'Absolute', 'Make all paths absolute on writing'),
+        ))
+
+    def invoke(self, context, event):
+        self.datablocks = get_exportable_ids(context)
+        if not self.datablocks:
+            self.report({'ERROR'}, 'No local datablock selected')
+            return {'CANCELLED'}
+
+        if not self.filepath:
+            name = self.datablocks[0].name if len(self.datablocks) == 1 else 'datablocks'
+            folder = dirname(bpy.data.filepath) if bpy.data.filepath else str(Path.home())
+            self.filepath = join(folder, bpy.path.clean_name(name) + '.blend')
+
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context):
+        datablocks = getattr(self, 'datablocks', None) or get_exportable_ids(context)
+        if not datablocks:
+            self.report({'ERROR'}, 'No local datablock to export')
+            return {'CANCELLED'}
+
+        filepath = bpy.path.ensure_ext(bpy.path.abspath(self.filepath), '.blend')
+        if bpy.data.filepath and Path(filepath) == Path(bpy.data.filepath):
+            self.report({'ERROR'}, 'Cannot overwrite current blend file')
+            return {'CANCELLED'}
+
+        try:
+            bpy.data.libraries.write(filepath, set(datablocks),
+                                     path_remap=self.path_remap,
+                                     fake_user=self.fake_user,
+                                     compress=self.compress)
+        except Exception as e:
+            self.report({'ERROR'}, f'Export failed: {e}')
+            return {'CANCELLED'}
+
+        self.report({'INFO'}, f'Exported {len(datablocks)} datablock(s) to: {filepath}')
+        return {'FINISHED'}
+
+
+def show_export_on_outliner_entry(self, context):
+    if not context.preferences.addons[__package__].preferences.dev_mode:
+        return
+    if not get_exportable_ids(context):
+        return
+    layout = self.layout
+    layout.separator()
+    layout.operator('path.export_datablocks_to_blend', icon='EXPORT')
+
+
 def show_open_ops_on_outliner_entry(self, context):
     if not getattr(context, 'id'):
         return
@@ -270,15 +348,22 @@ PATH_OT_open_in_new_instance,
 PATH_OT_full_reopen,
 PATH_OT_open_side_blend,
 PATH_OT_open_browser,
+PATH_OT_export_datablocks_to_blend,
 )
+
+outliner_menus = ('OUTLINER_MT_context_menu', 'OUTLINER_MT_object', 'OUTLINER_MT_collection')
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
     bpy.types.OUTLINER_MT_context_menu.append(show_open_ops_on_outliner_entry)
+    for menu in outliner_menus:
+        getattr(bpy.types, menu).append(show_export_on_outliner_entry)
 
 def unregister():
+    for menu in outliner_menus:
+        getattr(bpy.types, menu).remove(show_export_on_outliner_entry)
     bpy.types.OUTLINER_MT_context_menu.remove(show_open_ops_on_outliner_entry)
 
     for cls in reversed(classes):

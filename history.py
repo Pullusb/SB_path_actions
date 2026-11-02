@@ -56,20 +56,23 @@ class PATH_OT_open_last_file(Operator):
 
 ### Search in history (Search popup)
 
+## Keep a reference to the strings returned by enum callbacks
+## (else Blender can misbehave or crash, known bug with dynamic enums)
+history_enum_items = []
+
 def get_history_list(self, context):
     '''return (identifier, name, description) of enum content'''
-    # blends = []
-    # with open(self.history, 'r') as fd:
-    #     blends = [line.strip() for line in fd]
-    # if not blends:
-    #     return [("", "", "")]
-    # return [(i, Path(i).name, "") for i in blends]
+    global history_enum_items
     try:
         with open(self.history, 'r') as fd:
             blends = [line.strip() for line in fd]
-    except:
-        return [("", "", "")]
-    return [(i, Path(i).name, "") for i in blends]
+    except Exception:
+        blends = []
+    if not blends:
+        history_enum_items = [("", "", "")]
+    else:
+        history_enum_items = [(i, Path(i).name, "") for i in blends]
+    return history_enum_items
 
 class PATH_OT_search_open_history(Operator) :
     bl_idname = "path.open_from_history"
@@ -124,26 +127,24 @@ class PATH_OT_search_open_history(Operator) :
 ## Store list separately to be able to refresh popup content depending on context and sub_ops (attach propperty group to window manager)
 ## WIP 
 
+version_enum_items = []
+
 def get_user_path_all_versions(self, context):
     '''Get enum of all user path of blender versions (current on top of the list)
     return list of tuple (path, folder_name, description)
     Note: Can directly be used to feed a dynamic enum property
     But continuously refreshed when mouse move hover enum property.
     '''
+    global version_enum_items
     # print('Triggered get_user_path_all_versions') # Dbg
     current_path = Path(bpy.utils.resource_path('USER'))
-    
-    ## List all except current
-    # return [(str(p), p.name, '') for p in current_path.parent.iterdir() if p.name != current_path.name]
 
-    ## List all, with custom name for current p
-    # return [(str(p), p.name if p.name != current_path.name else f'{p.name} (current)' , '') for p in current_path.parent.iterdir()]
-
-    ## Lust all, same as above but reverse sorterd and with current version moved on top
+    ## List all, reverse sorted and with current version moved on top
     paths = [(str(p), p.name, '') for p in current_path.parent.iterdir() if p.name != current_path.name]
     paths.reverse()
     paths.insert(0, (str(current_path), f'{current_path.name} (Current)', ''))
-    return paths
+    version_enum_items = paths
+    return version_enum_items
 
 class PATHACTION_PG_path_list(bpy.types.PropertyGroup):
     path : bpy.props.StringProperty()

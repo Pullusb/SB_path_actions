@@ -1,5 +1,4 @@
 import bpy
-import re   
 from . import path_func
 from pathlib import Path
 from bpy.types import Operator
@@ -32,17 +31,16 @@ def get_addons_modules_infos(filter="ALL", module_name_first=False):
 
     addon_list = []
     module_list = []
-    remodule = re.compile(r"<module '(.*?)' from '(.*?)'>")
-    
-    for i, m in enumerate(addon_utils.modules()):
-        n = m.bl_info.get('name','')
-        
-        res = remodule.search(str(m))
-        if not res:
-            continue
 
-        diskname, fp = res.group(1), Path(res.group(2))
-        
+    for m in addon_utils.modules():
+        n = m.bl_info.get('name','')
+
+        diskname = m.__name__
+        module_file = getattr(m, '__file__', None)
+        if not module_file:
+            continue
+        fp = Path(module_file)
+
         installed, current = addon_utils.check(diskname)
         if filter != 'ALL':
             if filter == 'ACTIVE' and not current: # (installed or current)
@@ -90,11 +88,18 @@ def get_addons_modules_infos(filter="ALL", module_name_first=False):
 
     return addon_list
 
+## Keep a reference to the strings returned by enum callbacks
+## (else Blender can misbehave or crash, known bug with dynamic enums)
+addon_path_enum_items = []
+addon_module_enum_items = []
+
 def get_addon_list(self, context):
     '''return (identifier, name, description) of enum content
     Get all addon found as ([0] diskpath, [1] bl_info name, [2] Diskname (modulename))
     In enum prop item, return folderpath of the addon'''
-    return get_addons_modules_infos()
+    global addon_path_enum_items
+    addon_path_enum_items = get_addons_modules_infos()
+    return addon_path_enum_items
 
 class PATH_OT_search_open_addon_path(Operator) :
     bl_idname = "path.open_addon_directory"
@@ -133,7 +138,9 @@ def get_addon_enabled_module_name_list(self, context):
     '''return (identifier, name, description) of enum content
     Get all addon found as ([0] Diskname (modulename), [1] bl_info name, [2] diskpath)
     In enum prop item, return module name of the addon, to open preferences'''
-    return get_addons_modules_infos(module_name_first=True) # filter='ACTIVE' #  show only enabled ?
+    global addon_module_enum_items
+    addon_module_enum_items = get_addons_modules_infos(module_name_first=True) # filter='ACTIVE' #  show only enabled ?
+    return addon_module_enum_items
 
 # Duplicate of above but to open preferences.
 class PATH_OT_search_open_addon_preferences(Operator) :
