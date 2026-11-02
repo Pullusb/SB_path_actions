@@ -29,12 +29,20 @@ def open_folder(folderpath):
             cmd = 'explorer /select,'
             select = True
 
+        elif myOS.startswith('darwin'):
+            # Reveal (select) the file in Finder
+            cmd = 'open -R'
+            select = True
+
         elif myOS.startswith(('linux','freebsd')):
             if which('nemo'):
                 cmd = 'nemo --no-desktop'
                 select = True
             elif which('nautilus'):
                 cmd = 'nautilus --no-desktop'
+                select = True
+            elif which('dolphin'):
+                cmd = 'dolphin --select'
                 select = True
 
         if not select:
@@ -60,7 +68,6 @@ def open_blend_new_instance(filepath=None, strip_extra_args=False):
     filepath = str(filepath)
     if filepath.startswith('//'):
         filepath = abspath(bpy.path.abspath(filepath))
-        print(filepath)
 
     ## Copy to avoid mutating blender's own sys.argv
     cmd = sys.argv.copy()
@@ -83,8 +90,10 @@ def open_blend_new_instance(filepath=None, strip_extra_args=False):
     # print('cmd: ', cmd)
     system = sys.platform.lower()
     if system.startswith('linux'):
-        # if which('gnome-terminal'): # not all desktops have gnome-terminal
-        cmd = ['gnome-terminal', '--'] + cmd
+        ## Open in a terminal to see console output, when available
+        ## (not all desktops have gnome-terminal, else launch blender directly)
+        if which('gnome-terminal'):
+            cmd = ['gnome-terminal', '--'] + cmd
     elif system.startswith('darwin'):
         cmd = ['open', '-W', '-a', 'Terminal.app'] + cmd
     #elif system == 'Windows': # do not seem to be needed
