@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - History search popup and extended history skipped some files in `recent-files.txt`
 - `Open in new instance` could alter blender's own launch arguments for later calls
-- Copy alternative path: resolved parent path was labeled `Absolute Parent`
+- Copy alternative path: resolved parent path was labeled `Absolute Parent`, fix potential added trailing slash
 - Links checker: Add missing datablocks, tiled images (`<UDIM>`, `<UVTILE>`) were always reported broken, now valid if at least one tile exists.
 - `Open output folder` now resolves path templates (ex: `{blend_name}`) and frame number tokens
 - Under Linux, `Open in new instance` launch blender directly if `gnome-terminal` is not installed
@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Copy alternative path popup:
+    - `Relative` and `Relative Parent` entries: path relative to current blend (when saved and path is not already relative)
+    - `Slash Style` (`As is`, `Forward Slash` or `Escaped`). Only shown when paths contain backslashes)
 - `Export To Blend` in outliner right-click menu (only with `dev mode` prefs enabled): write selected local datablocks (and dependencies) to an external blend using `bpy.data.libraries.write`. Compressed by default, with options for fake user, path remap and `Mark As Asset` (preview thumbnail is not generated if not mark before using)
 
 ## [2.8.0] - 2026-04-14

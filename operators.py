@@ -48,6 +48,12 @@ class PATHACTION_OT_copy_text_to_clipboard(Operator):
         return {"FINISHED"}
 
 
+def parent_path(path):
+    '''dirname handling blend relative prefix "//" (prevent confusion with UNC path on Windows, ex: "//../tex" -> "//../tex/")'''
+    if path.startswith('//'):
+        return '//' + dirname(path[2:])
+    return dirname(path)
+
 ## Popup to copy alternative path from a single generic path
 class PATHACTION_OT_copy_alternative_path(bpy.types.Operator):
     bl_idname = "pathaction.copy_alternative_path"
@@ -64,9 +70,16 @@ class PATHACTION_OT_copy_alternative_path(bpy.types.Operator):
     #     description="Check if path is valid",
     #     default=False, options={'SKIP_SAVE'})
 
-    relative_to_blend : bpy.props.BoolProperty(name="Relative to Blend",
-        description="Show path absolute/relative to current blend file, like libraries or links",
-        default=False)
+    slash_style : bpy.props.EnumProperty(
+        name="Slash Style",
+        description="Choose how backslashes are written (only shown when paths contain backslashes)",
+        items=(
+            ('NATIVE', "As Is", "Keep path separators as is", 0),
+            ('FORWARD', "Forward Slash", "Replace \\ with /", 1),
+            ('ESCAPED', "Escaped", "Double backslashes \\\\ (ex: for code strings)", 2),
+        ),
+        default='NATIVE',
+    )
 
     quote_style : bpy.props.EnumProperty(
         name="Quote Style",
@@ -99,7 +112,7 @@ class PATHACTION_OT_copy_alternative_path(bpy.types.Operator):
             return self.execute(context)
 
         self.pathes.append(('Blend' if self.is_blend else 'Path', self.path))
-        self.pathes.append(('Folder' if self.is_blend else 'Parent', dirname(self.path)))
+        self.pathes.append(('Folder' if self.is_blend else 'Parent', parent_path(self.path)))
 
         ## Show absolute path if different
         if absolute != path_obj:        
@@ -111,32 +124,23 @@ class PATHACTION_OT_copy_alternative_path(bpy.types.Operator):
             self.pathes.append(('Resolved', str(resolved)))
             self.pathes.append(('Resolved Parent', str(resolved.parent)))
 
-        ## TODO: If current Blend file is saved, also show relative path to blend (if path is not already relative)
-        ## Moslty interesting for libraries (could be shown only if a dedicated operator prop is enabled)
-        # /wip relative_path
-        # if self.relative_to_blend and bpy.data.is_saved:
-        #     ## if it's a relative path, show absolute path
-        #     ## how to detect if it's relative to blend ? (could be a library or a link)
-        #     if path_obj.is_absolute():
-        #         blend_path = Path(bpy.data.filepath)
-        #         # if not blend_path.is_absolute():
-        #         #     blend_path = blend_path.resolve()
-        #         relative = path_obj.relative_to(blend_path.parent)
-        #         self.pathes.append(('Relative to Blend', str(relative))
-        #     )
-        #     blend_path = Path(bpy.data.filepath)
-        #     # if not blend_path.is_absolute():
-        #     #     blend_path = blend_path.resolve()
-        #     relative = path_obj.relative_to(blend_path.parent)
-        #     self.pathes.append(('Relative to Blend', str(relative)))
-        ## wip /
-        
+        ## Show path relative to current blend (if saved and path is not already relative)
+        if bpy.data.is_saved and not self.is_blend and not self.path.startswith('//'):
+            try:
+                relative = bpy.path.relpath(str(absolute))
+                self.pathes.append(('Relative', relative))
+                self.pathes.append(('Relative Parent', parent_path(relative)))
+            except ValueError:
+                # Path on another drive than the blend (Windows)
+                pass
 
         ## Get name and stem using bpy.path as pathlib can be problematic with path starting with // (add an extra `/`)
         if name := bpy.path.basename(self.path):
             self.pathes.append(('Name', name))
         if (stem := bpy.path.display_name_from_filepath(self.path)) and stem != name:
             self.pathes.append(('Stem', stem))
+
+        self.has_backslash = any('\\' in p for _, p in self.pathes)
 
         maxlen = max(len(l[1]) for l in self.pathes)
         popup_width = 800 
@@ -157,9 +161,19 @@ class PATHACTION_OT_copy_alternative_path(bpy.types.Operator):
         # row.use_property_split = False # <- only on row
         row.prop(self, 'quote_style', text='Quote Style', expand=True)
 
+        if self.has_backslash:
+            row = col.row()
+            row.prop(self, 'slash_style', text='Slash Style', expand=True)
+
         col.separator()
 
         for action_name, filepath in self.pathes:
+
+            if self.has_backslash:
+                if self.slash_style == 'FORWARD':
+                    filepath = filepath.replace('\\', '/')
+                elif self.slash_style == 'ESCAPED':
+                    filepath = filepath.replace('\\', '\\\\')
 
             if self.quote_style == 'DOUBLE':
                 filepath = f'"{filepath}"'
