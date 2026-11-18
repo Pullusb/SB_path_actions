@@ -357,6 +357,83 @@ class PATHACTION_OT_replace_file_library(Operator):
                 
         return bpy.ops.pathaction.update_file_path(source_path=self.source_path, target_path=self.filepath)
 
+def get_library_users(library_path):
+    """Return datablocks linked from the library and the objects related to them
+    (linked objects, overrides and local objects using linked data, ex: linked material > local mesh > object)"""
+    linked_ids = [i for lib in bpy.data.libraries if lib.filepath == library_path for i in lib.users_id]
+    objects = {i for i in linked_ids if isinstance(i, bpy.types.Object)}
+
+    ## Go up the users chain, stop at objects (containers like collections and scenes are skipped)
+    user_map = bpy.data.user_map()
+    viewed = set(linked_ids)
+    to_check = list(linked_ids)
+    while to_check:
+        for user in user_map.get(to_check.pop(), ()):
+            if user in viewed:
+                continue
+            viewed.add(user)
+            if isinstance(user, bpy.types.Object):
+                objects.add(user)
+            elif not isinstance(user, (bpy.types.Collection, bpy.types.Scene)):
+                to_check.append(user)
+    return linked_ids, objects
+
+class PATHACTION_OT_select_library_users(Operator):
+    bl_idname = "pathaction.select_library_users"
+    bl_label = "Select Library Users"
+    bl_description = "List datablocks linked from this library\
+        \nand select related objects in viewport (linked, overrides or using linked data)"
+    bl_options = {"REGISTER", "INTERNAL", "UNDO"}
+
+    library_path: bpy.props.StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        linked_ids, objects = get_library_users(self.library_path)
+        if not linked_ids:
+            self.report({'WARNING'}, f"No datablock linked from: {self.library_path}")
+            return {'CANCELLED'}
+
+        ## Select related objects (only possible if in current view layer and selectable)
+        view_layer_objects = set(context.view_layer.objects)
+        for ob in context.view_layer.objects:
+            ob.select_set(False)
+        for ob in objects:
+            if ob in view_layer_objects:
+                ob.select_set(True)
+        selected = [ob for ob in objects if ob in view_layer_objects and ob.select_get()]
+        if selected and context.view_layer.objects.active not in selected:
+            context.view_layer.objects.active = selected[0]
+
+        ## Report linked datablocks by type
+        by_type = {}
+        for i in linked_ids:
+            by_type.setdefault(type(i).__name__, []).append(i.name)
+        select_line = f"{len(selected)} related objects selected"
+        if len(selected) < len(objects):
+            select_line += f" ({len(objects) - len(selected)} hidden or not in view layer)"
+
+        print(f"\nLibrary: {self.library_path}")
+        for type_name, names in sorted(by_type.items()):
+            print(f"{type_name} ({len(names)}): {', '.join(sorted(names))}")
+        print(select_line)
+
+        def draw(popup, context):
+            layout = popup.layout
+            for type_name, names in sorted(by_type.items()):
+                ## Limit displayed names (full list is printed in console)
+                text = ', '.join(sorted(names)[:8])
+                if len(names) > 8:
+                    text += ', ...'
+                layout.label(text=f"{type_name} ({len(names)}): {text}")
+            layout.separator()
+            layout.label(text=select_line, icon='RESTRICT_SELECT_OFF')
+
+        ## popup_menu crashes blender without a window (background mode)
+        if not bpy.app.background and context.window:
+            context.window_manager.popup_menu(draw, title=f"Linked from {bpy.path.basename(self.library_path)}", icon='LIBRARY_DATA_DIRECT')
+        self.report({'INFO'}, f"{len(linked_ids)} linked datablocks, {select_line}")
+        return {'FINISHED'}
+
 class PATHACTION_OT_check_latest_versions(Operator):
     bl_idname = "pathaction.check_latest_versions"
     bl_label = "Check Latest Versions"
@@ -467,7 +544,7 @@ class PATHACTION_OT_links_checker(Operator):
                 max_length = max(len(path) for path in paths)
                 # Approximate width based on characters (this is a rough estimate)
                 char_width = 7  # pixels per character
-                button_width = 120  # space for buttons
+                button_width = 140  # space for buttons
                 self.popup_width = min(max(450, int(max_length * char_width + button_width)), 1200)
         except Exception:
             pass
@@ -706,8 +783,12 @@ class PATHACTION_OT_links_checker(Operator):
                 if Path(bpy.path.abspath(parent_dir)).exists():
                     op.filepath = parent_dir
 
+                # List linked datablocks and select related objects
+                action_row.operator("pathaction.select_library_users", text="", icon='RESTRICT_SELECT_OFF').library_path = item.path
+
             else:
                 # Add placeholders for consistent spacing
+                action_row.label(text="", icon='BLANK1')  # Select users placeholder
                 action_row.label(text="", icon='BLANK1')  # Update target placeholder
                 action_row.label(text="", icon='BLANK1')  # New instance placeholder
                 action_row.label(text="", icon='BLANK1')  # Edit path placeholder
@@ -752,6 +833,7 @@ classes = (
     PATHACTION_OT_update_file_path,
     PATHACTION_OT_edit_file_path,
     PATHACTION_OT_replace_file_library,
+    PATHACTION_OT_select_library_users,
     PATHACTION_OT_check_latest_versions,
     PATHACTION_OT_update_to_latest_versions,
     PATHACTION_OT_links_checker,
