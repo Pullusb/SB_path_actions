@@ -34,6 +34,7 @@ Add a folder icon button at the right of the topbar that open Blend's current di
 Modifier-keys + click on the button to trigger other actions:
 - `Ctrl + Click` : Copy Blend path
 - `Shift + Click` : Open Side Blend
+- `Ctrl + Shift + Click` : Open Same Depth Blend
 - `Alt + Click` : Alternative actions
 - `Cltr + Alt + Click` : Copy formatted path to Blend popup
 
@@ -45,6 +46,15 @@ List other blend file in the same folder as current blend (ordered):
 - Click on "copy" icon to **copy path to blend**
 
 ![Open side blend](https://github.com/Pullusb/images_repo/blob/master/PA_v2_open_side_blend.png)
+
+## Open Same Depth Blend (Ctrl + Shift + Click)
+
+List blends located at the same depth as current blend in surrounding folders (ex: same task in other shots folders):
+- `Parent Levels`: how many parent folders to go up before listing (default 1, `0` lists only current folder)
+- Search bar to filter on relative path
+- Parent folder name filter, to keep only blends having this folder in their path (ex: `anim`)
+- `Latest Only`: show only the last blend of each folder
+- `Copy List`: copy full path of all filtered blends to clipboard
 
 ### Alternative actions (Alt + Click)
 

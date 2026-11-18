@@ -3,7 +3,16 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-<!-- ## [Unreleased] -->
+## [Unreleased]
+
+### Added
+
+- Links checker: `Select Library Users` button on library lines. List datablocks linked from the library (by type, full list in console) and select related objects in viewport (linked objects, library overrides and local objects using linked data)
+- `Open same depth blend` popup (`Ctrl + Shift + Click` on topbar folder icon, also in `Alt + Click` panel): list blends at the same depth as current blend in surrounding folders
+    - `Parent Levels`: number of parent folders to go up (default 1, triggers a rescan)
+    - Live filters on scanned items: search bar (relative path, all words must match), parent folder name (case insensitive, wildcards allowed, suggestions from scanned folders) and `Latest Only` (last blend of each folder, natural sort on name)
+    - Sort by name or date, current blend greyed at its position
+    - `Copy List` button: copy full paths of filtered blends to clipboard (one per line)
 
 ## [2.9.0] - 2026-11-02
 
