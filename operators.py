@@ -20,6 +20,7 @@ class PATHACTION_PT_blend_location_ui(Panel):
         layout = self.layout
         layout.operator("pathaction.blend_history", text="File History", icon='FILE_BLEND') # BLENDER
         layout.operator("path.copy_blend_path", text="Copy Formatted Blend Path", icon='COPYDOWN') # Copy Blend Path Format...
+        # layout.operator("wm.open_same_depth_blend", text="Same Depth Blends", icon='FILE_PARENT')
         layout.separator()
         blender_locations(layout)
 
@@ -305,6 +306,11 @@ class PATH_OT_open_blend_folder(Operator):
             bpy.ops.path.copy_blend_path('INVOKE_DEFAULT')
             return {'FINISHED'}
         
+        elif self.ctrl and self.shift:
+            ## List blends at same depth in surrounding folders
+            bpy.ops.wm.open_same_depth_blend('INVOKE_DEFAULT')
+            return {'FINISHED'}
+
         elif self.ctrl:
             ## Direct raw path copy
             bpy.context.window_manager.clipboard = fileloc
