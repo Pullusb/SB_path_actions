@@ -55,6 +55,16 @@ List blends located at the same depth as current blend in surrounding folders (e
 - Parent folder name filter, to keep only blends having this folder in their path (ex: `anim`)
 - `Latest Only`: show only the last blend of each folder
 - `Copy List`: copy full path of all filtered blends to clipboard
+- `To Navigation List`: set filtered blends as navigation list (see below)
+
+## Navigation List
+
+When a navigation list exists, buttons appear in the topbar next to the folder icon: `◀ previous` / list popup / `next ▶`, to step through the listed blends (in list order). Missing files are skipped.  
+If the current blend is not in the list, only the list button is shown.
+
+The list popup shows all listed blends (click to open), with buttons to copy the list, clear it (hiding the topbar buttons) and open the list file location.
+
+The list is a plain text file in user config folder: `path_actions_nav_list.txt`, one blend path per line (blank lines and lines starting with `#` are ignored). It can be written by hand or by any external tool, it is read again on each file load.
 
 ### Alternative actions (Alt + Click)
 

@@ -9,6 +9,7 @@ import time
 from fnmatch import fnmatch
 from pathlib import Path
 from bpy.types import Operator
+from . import blend_nav_list
 
 ## Max number of rows drawn in popup (copy to clipboard always use the full filtered list)
 MAX_DISPLAY = 200
@@ -273,6 +274,7 @@ class PATH_OT_open_same_depth_blend(Operator):
         copy_row.alignment = 'RIGHT'
         copy_row.enabled = bool(filtered)
         copy_row.operator('wm.same_depth_blend_copy_list', text='Copy List', icon='COPYDOWN')
+        copy_row.operator('wm.same_depth_blend_to_nav_list', text='To Navigation List', icon='LONGDISPLAY')
 
         if cache['levels'] < cache['requested_levels']:
             col.label(text=f"Reached root: only {cache['levels']} parent level(s)", icon='INFO')
@@ -365,10 +367,35 @@ class PATH_OT_same_depth_blend_copy_list(Operator):
         return {'FINISHED'}
 
 
+class PATH_OT_same_depth_blend_to_nav_list(Operator):
+    bl_idname = "wm.same_depth_blend_to_nav_list"
+    bl_label = 'To Navigation List'
+    bl_description = "Set filtered blends (in displayed order) as navigation list\
+        \nShow previous / next buttons in topbar to step through those blends\
+        \nReplace existing navigation list"
+    bl_options = {"REGISTER", "INTERNAL"}
+
+    def execute(self, context):
+        filtered = _cache['filtered']
+        if not filtered:
+            self.report({'WARNING'}, 'No blend to set as navigation list')
+            return {'CANCELLED'}
+        try:
+            blend_nav_list.write_nav_list([i.path for i in filtered])
+        except OSError as e:
+            self.report({'ERROR'}, f'Could not write navigation list: {e}')
+            return {'CANCELLED'}
+        blend_nav_list.refresh_nav()
+        blend_nav_list.tag_topbar_redraw()
+        self.report({'INFO'}, f'{len(filtered)} blends set as navigation list')
+        return {'FINISHED'}
+
+
 classes = (
     PATH_OT_open_same_depth_blend,
     PATH_OT_same_depth_blend_rescan,
     PATH_OT_same_depth_blend_copy_list,
+    PATH_OT_same_depth_blend_to_nav_list,
 )
 
 def register():

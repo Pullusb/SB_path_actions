@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Live filters on scanned items: search bar (relative path, all words must match), parent folder name (case insensitive, wildcards allowed, suggestions from scanned folders) and `Latest Only` (last blend of each folder, natural sort on name)
     - Sort by name or date, current blend greyed at its position
     - `Copy List` button: copy full paths of filtered blends to clipboard (one per line)
+    - `To Navigation List` button: set filtered blends as navigation list
+- Navigation list: step through a list of blends from topbar buttons (`◀ previous` / list popup / `next ▶`), next to the folder icon
+    - Stored as plain text in user config folder (`path_actions_nav_list.txt`, one path per line, `#` comments allowed), so it survives file loads and restarts and can be written by any external tool
+    - Only list button is shown when current blend is not in the list
+    - Missing files are skipped when stepping (no disk check otherwise)
+    - List popup: clickable list (current blend greyed), copy list, clear list (hide topbar buttons), open list file location
 
 ## [2.9.0] - 2026-11-02
 

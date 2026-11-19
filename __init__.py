@@ -17,6 +17,7 @@ from . import (
             history,
             links_checker,
             blend_open_ops,
+            blend_nav_list,
             list_same_hierarchy_blends,
             extend_history,
             open_addons_path,
@@ -27,6 +28,7 @@ from . import (
 mods = (
     operators,
     blend_open_ops,
+    blend_nav_list,
     list_same_hierarchy_blends,
     history,
     links_checker,

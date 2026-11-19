@@ -275,6 +275,7 @@ class PATH_OT_open_blend_folder(Operator):
         \n\
         \nCtrl: Copy path to blend\
         \nShift: Open a side blend\
+        \nCtrl+Shift: Open a same depth blend (surrounding folders)\
         \nAlt: History and blend app locations\
         \nCtrl+Alt: Copy formatted blend path"
     bl_options = {'REGISTER'}
