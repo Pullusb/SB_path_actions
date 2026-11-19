@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Stored as plain text in user config folder (`path_actions_nav_list.txt`, one path per line, `#` comments allowed), so it survives file loads and restarts and can be written by any external tool
     - Only list button is shown when current blend is not in the list
     - Missing files are skipped when stepping (no disk check otherwise)
+    - `Ctrl + Click` on previous / next: open without asking to save changes (unsaved changes are lost)
     - List popup: clickable list (current blend greyed), copy list, clear list (hide topbar buttons), open list file location
 
 ## [2.9.0] - 2026-11-02

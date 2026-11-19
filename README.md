@@ -60,7 +60,8 @@ List blends located at the same depth as current blend in surrounding folders (e
 ## Navigation List
 
 When a navigation list exists, buttons appear in the topbar next to the folder icon: `◀ previous` / list popup / `next ▶`, to step through the listed blends (in list order). Missing files are skipped.  
-If the current blend is not in the list, only the list button is shown.
+If the current blend is not in the list, only the list button is shown.  
+`Ctrl + Click` on previous / next opens without asking to save changes (unsaved changes are lost).
 
 The list popup shows all listed blends (click to open), with buttons to copy the list, clear it (hiding the topbar buttons) and open the list file location.
 

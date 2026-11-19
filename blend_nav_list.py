@@ -129,12 +129,17 @@ def tag_topbar_redraw():
                 area.tag_redraw()
 
 
-def open_blend(context, filepath):
-    '''Open blend, showing the "unsaved changes" warning when needed'''
+def open_blend(context, filepath, discard_changes=False):
+    '''Open blend, showing the "unsaved changes" warning when needed
+    discard_changes: load directly, unsaved changes are lost (exec skips the warning)'''
+    load_ui = context.preferences.filepaths.use_load_ui
+    if discard_changes:
+        bpy.ops.wm.open_mainfile('EXEC_DEFAULT', filepath=filepath, load_ui=load_ui)
+        return
     bpy.ops.wm.open_mainfile('INVOKE_DEFAULT',
                              filepath=filepath,
                              display_file_selector=False,
-                             load_ui=context.preferences.filepaths.use_load_ui)
+                             load_ui=load_ui)
 
 
 ## --- Topbar
@@ -177,6 +182,7 @@ class PATHACTION_OT_nav_step(Operator):
     bl_options = {'INTERNAL'} # no undo push: a file is loaded
 
     direction : bpy.props.IntProperty(default=1, options={'SKIP_SAVE'})
+    discard_changes : bpy.props.BoolProperty(default=False, options={'SKIP_SAVE', 'HIDDEN'})
 
     @classmethod
     def description(cls, context, properties):
@@ -186,9 +192,11 @@ class PATHACTION_OT_nav_step(Operator):
         if targets:
             desc += f"\n{targets[0]}"
         desc += '\n(Missing files are skipped)'
+        desc += '\n\nCtrl + Click: Open without asking to save changes (unsaved changes are lost)'
         return desc
 
     def invoke(self, context, event):
+        self.discard_changes = event.ctrl
         return self.execute(context)
 
     def execute(self, context):
@@ -220,7 +228,7 @@ class PATHACTION_OT_nav_step(Operator):
             ## Report before opening (operator data can be freed once file is loaded)
             self.report({'WARNING'}, f'Skipped {len(skipped)} missing file(s), see console')
 
-        open_blend(context, target)
+        open_blend(context, target, discard_changes=self.discard_changes)
         return {'FINISHED'}
 
 
