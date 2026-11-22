@@ -299,6 +299,13 @@ class PATH_OT_open_blend_folder(Operator):
             self.report({'INFO'}, f"Path Actions: dev mode {'enabled' if prefs.dev_mode else 'disabled'}")
             return {'FINISHED'}
 
+        ## Hidden shortcut (not in tooltip): Shift+Alt opens links checker, only in dev mode
+        if self.shift and self.alt and not self.ctrl:
+            if context.preferences.addons[__package__].preferences.dev_mode:
+                bpy.ops.pathaction.links_checker('INVOKE_DEFAULT')
+            ## Return in any case: must not fall back to Shift action (open side blend)
+            return {'FINISHED'}
+
         if not bpy.data.is_saved and not (self.alt and not self.ctrl and not self.shift):
             self.report({'ERROR'}, "Blend not saved: No folder to open or copy")
             return {'CANCELLED'}

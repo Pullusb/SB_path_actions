@@ -529,7 +529,13 @@ class PATHACTION_OT_links_checker(Operator):
         description="Reverse the sort order",
         default=False
     )
-    
+
+    show_bundled: bpy.props.BoolProperty(
+        name="Show Bundled",
+        description="Show paths shipped with Blender install (ex: essentials assets)",
+        default=False
+    )
+
     def invoke(self, context, event):
         # Call the external check_links function
         check_links(context)
@@ -625,7 +631,10 @@ class PATHACTION_OT_links_checker(Operator):
         row.prop(self, "reverse_sort", text="", icon='SORT_ASC' if not self.reverse_sort else 'SORT_DESC')
         
         row.prop(self, 'search_field', text="", icon='VIEWZOOM')
-        
+
+        if wm.pa_links_stats.bundled_count:
+            row.prop(self, 'show_bundled')
+
         # Version check for blend files (if any)
         if any(item.is_blend and item.is_valid for item in list_collection):
             check_row = layout.row()
@@ -638,19 +647,26 @@ class PATHACTION_OT_links_checker(Operator):
             layout.label(text='No external links found', icon='INFO')
             return
         
-        # Filter by search
-        filtered_items = list_collection
-        
+        # Filter out bundled paths if disabled
+        visible_items = list_collection
+        if not self.show_bundled:
+            visible_items = [item for item in list_collection if not item.is_bundled]
+            if not visible_items:
+                layout.label(text='Only bundled paths (hidden)', icon='INFO')
+                return
+
+        filtered_items = visible_items
+
         # Apply search filter if text entered
         search_terms = self.search_field
         if search_terms:
             ## Note: using '.removeprefix('//')' before using 'Path().name' because Pathlib starting with '//' considered as UNC path on Windows.
             ## with only one parent ("//../some_file.ext"), last part is misinterpreted as being a folder (thus Path.name returns empty string)
-            filtered_items = [item for item in list_collection if search_terms.lower() in Path(item.path.removeprefix('//')).name.lower()]
+            filtered_items = [item for item in visible_items if search_terms.lower() in Path(item.path.removeprefix('//')).name.lower()]
 
             # Nothing found in name, fall back in full path search
             if not filtered_items:
-                filtered_items = [item for item in list_collection if search_terms.lower() in item.path.lower()]
+                filtered_items = [item for item in visible_items if search_terms.lower() in item.path.lower()]
                 if filtered_items:
                     layout.label(text=f'Match path (nothing in names)', icon='INFO')
 
