@@ -12,7 +12,9 @@ from bpy.types import Operator
 
 LIST_FILENAME = 'path_actions_nav_list.txt'
 ## Max number of rows drawn in list popup (window centered on current blend)
-MAX_DISPLAY = 100
+MAX_DISPLAY = 250
+## Topbar prev / next names longer than this are shortened in the middle
+MAX_NAME_LEN = 50
 
 ## Navigation list cache, frozen at each refresh (file load, set, clear, list popup)
 ## Draw and step only read it: no path comparison, no disk access
@@ -76,6 +78,15 @@ def clear_nav_list():
     return True
 
 
+def short_name(name, max_len=MAX_NAME_LEN):
+    '''Shorten long names in the middle (keep start and version suffix visible)'''
+    if len(name) <= max_len:
+        return name
+    head = (max_len - 1) // 2
+    tail = max_len - 1 - head
+    return name[:head] + '…' + name[-tail:]
+
+
 def refresh_nav():
     '''Read list file and freeze cache (position of current blend and its prev / next targets)'''
     files = read_nav_list()
@@ -113,8 +124,8 @@ def refresh_nav():
         current=current,
         prev_targets=prev_targets,
         next_targets=next_targets,
-        prev_name=Path(prev_targets[0]).stem if prev_targets else '',
-        next_name=Path(next_targets[0]).stem if next_targets else '',
+        prev_name=short_name(Path(prev_targets[0]).stem) if prev_targets else '',
+        next_name=short_name(Path(next_targets[0]).stem) if next_targets else '',
     )
 
 
@@ -149,28 +160,19 @@ def draw_nav_buttons(layout, context):
         return
     listed = _nav['current'] >= 0
 
+    def draw_step(name, icon, direction):
+        '''Single button [arrow name], disabled arrow only when end of list is reached'''
+        sub = row.row(align=True)
+        ## No fixed width: header buttons fit their text (long names are shortened at refresh)
+        sub.enabled = bool(name)
+        sub.operator('pathaction.nav_step', text=name, icon=icon).direction = direction
+
     row = layout.row(align=True)
     if listed:
-        ## Previous: [<][name]
-        prev_row = row.row(align=True)
-        prev_row.enabled = bool(_nav['prev_name'])
-        prev_row.operator('pathaction.nav_step', text='', icon='TRIA_LEFT').direction = -1
-        if _nav['prev_name']:
-            name_row = prev_row.row(align=True)
-            name_row.ui_units_x = 6
-            name_row.operator('pathaction.nav_step', text=_nav['prev_name']).direction = -1
-
+        draw_step(_nav['prev_name'], 'TRIA_LEFT', -1)
     row.operator('pathaction.nav_list_popup', text='', icon='LONGDISPLAY')
-
     if listed:
-        ## Next: [name][>]
-        next_row = row.row(align=True)
-        next_row.enabled = bool(_nav['next_name'])
-        if _nav['next_name']:
-            name_row = next_row.row(align=True)
-            name_row.ui_units_x = 6
-            name_row.operator('pathaction.nav_step', text=_nav['next_name']).direction = 1
-        next_row.operator('pathaction.nav_step', text='', icon='TRIA_RIGHT').direction = 1
+        draw_step(_nav['next_name'], 'TRIA_RIGHT', 1)
 
 
 ## --- Operators
