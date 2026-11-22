@@ -271,8 +271,12 @@ class PATHACTION_OT_nav_list_popup(Operator):
         row = col.row()
         sub = row.row()
         sub.active = False
-        position = f' (current: {idx + 1})' if idx >= 0 else ' (current blend not listed)'
-        sub.label(text=f'{len(files)} blends{position}' if files else 'Empty list')
+        if not files:
+            sub.label(text='Empty list')
+        elif idx >= 0:
+            sub.label(text=f'{idx + 1}/{len(files)} blends')
+        else:
+            sub.label(text=f'{len(files)} blends (current blend not listed)')
         btn_row = row.row(align=True)
         btn_row.alignment = 'RIGHT'
         btn_row.enabled = bool(files)
@@ -295,6 +299,11 @@ class PATHACTION_OT_nav_list_popup(Operator):
             row.label(text=f'... {start} more above', icon='INFO')
 
         main_row = layout.row(align=True)
+        ## Position numbers (narrow column, width from digit count)
+        num_col = main_row.column(align=True)
+        num_col.alignment = 'RIGHT'
+        num_col.ui_units_x = 0.5 * len(str(len(files))) + 0.6
+
         blend_col = main_row.column(align=True)
         blend_col.alignment = 'LEFT'
 
@@ -307,6 +316,11 @@ class PATHACTION_OT_nav_list_popup(Operator):
         mtimes = getattr(self, 'mtimes', {})
         for i in range(start, end):
             path = files[i]
+            num_row = num_col.row()
+            num_row.alignment = 'RIGHT'
+            num_row.active = False
+            num_row.label(text=str(i + 1))
+
             blend_row = blend_col.row()
             blend_row.alignment = 'LEFT'
             if i == idx:
