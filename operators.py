@@ -5,6 +5,7 @@ from bpy.types import Operator, Panel
 from os.path import dirname, abspath
 
 from .path_func import open_folder
+from .blend_nav_list import tag_topbar_redraw
 from .prefs import blender_locations
 
 
@@ -288,6 +289,16 @@ class PATH_OT_open_blend_folder(Operator):
         self.ctrl = event.ctrl
         self.alt = event.alt
         self.shift = event.shift
+
+        ## Hidden shortcut (not in tooltip): Ctrl+Shift+Alt toggles dev mode in addon prefs
+        if self.ctrl and self.shift and self.alt:
+            prefs = context.preferences.addons[__package__].preferences
+            prefs.dev_mode = not prefs.dev_mode
+            context.preferences.is_dirty = True # saved with auto-save preferences
+            tag_topbar_redraw() # show / hide dev mode buttons (full reopen)
+            self.report({'INFO'}, f"Path Actions: dev mode {'enabled' if prefs.dev_mode else 'disabled'}")
+            return {'FINISHED'}
+
         if not bpy.data.is_saved and not (self.alt and not self.ctrl and not self.shift):
             self.report({'ERROR'}, "Blend not saved: No folder to open or copy")
             return {'CANCELLED'}
