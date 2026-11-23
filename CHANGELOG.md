@@ -3,23 +3,27 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.0.0] - 2026-11-23
 
 ### Added
 
-- Links checker: `Select Library Users` button on library lines. List datablocks linked from the library (by type, full list in console) and select related objects in viewport (linked objects, library overrides and local objects using linked data)
-- `Open same depth blend` popup (`Ctrl + Shift + Click` on topbar folder icon, also in `Alt + Click` panel): list blends at the same depth as current blend in surrounding folders
-    - `Parent Levels`: number of parent folders to go up (default 1, triggers a rescan)
-    - Live filters on scanned items: search bar (relative path, all words must match), parent folder name (case insensitive, wildcards allowed, suggestions from scanned folders) and `Latest Only` (last blend of each folder, natural sort on name)
-    - Sort by name or date, current blend greyed at its position
-    - `Copy List` button: copy full paths of filtered blends to clipboard (one per line)
-    - `To Navigation List` button: set filtered blends as navigation list
-- Navigation list: step through a list of blends from topbar buttons (`◀ previous` / list popup / `next ▶`), next to the folder icon
-    - Stored as plain text in user config folder (`path_actions_nav_list.txt`, one path per line, `#` comments allowed), so it survives file loads and restarts and can be written by any external tool
-    - Only list button is shown when current blend is not in the list
-    - Missing files are skipped when stepping (no disk check otherwise)
+- `Open Same Depth Blend` popup (`Ctrl + Shift + Click` on topbar folder icon, also in `Alt + Click` panel): list blends at the same depth as current blend in surrounding folders
+    - Number of parent levels to scan, live filters (search, parent folder name, latest only) and sort by name or date
+    - Copy the filtered list to clipboard or send it to the navigation list
+- Navigation list: step through a list of blends from topbar buttons (previous / list popup / next), next to the folder icon
+    - Stored as plain text in user config folder (`path_actions_nav_list.txt`, one path per line), so it survives restarts and can be written by any external tool
     - `Ctrl + Click` on previous / next: open without asking to save changes (unsaved changes are lost)
-    - List popup: clickable list (current blend greyed), copy list, clear list (hide topbar buttons), open list file location
+    - List popup: numbered list with search field, copy, clear and open list file location. Long lists are cropped around current blend (`Show All` toggle)
+- Links checker: `Select Library Users` button on library lines, also in outliner right-click menu on libraries. Select objects related to the library (linked, overrides or local objects using linked data) and show linked datablocks by type, with unused and fake user only counts
+    - Details popup per datablock type (users, fake user, override, related objects) to select by type or by single datablock
+    - `Shift`: extend selection, `Ctrl`: no popup
+- Topbar folder icon hidden shortcuts:
+    - `Ctrl + Shift + Alt + Click`: enable dev mode, then open links checker once enabled
+    - `Shift + Alt + Click`: search addon preferences popup
+
+### Changed
+
+- Links checker: paths bundled with Blender (ex: essentials assets) are hidden unless `Show Bundled` is enabled
 
 ## [2.9.0] - 2026-11-02
 
