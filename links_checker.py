@@ -382,10 +382,20 @@ class PATHACTION_OT_select_library_users(Operator):
     bl_idname = "pathaction.select_library_users"
     bl_label = "Select Library Users"
     bl_description = "List datablocks linked from this library\
-        \nand select related objects in viewport (linked, overrides or using linked data)"
+        \nand select related objects in viewport (linked, overrides or using linked data)\
+        \n\
+        \nShift: Extend selection (keep previous selection)\
+        \nCtrl: Do not show the infos popup"
     bl_options = {"REGISTER", "INTERNAL", "UNDO"}
 
     library_path: bpy.props.StringProperty(options={'SKIP_SAVE'})
+    extend: bpy.props.BoolProperty(name="Extend", default=False, options={'SKIP_SAVE'})
+    show_popup: bpy.props.BoolProperty(name="Show Popup", default=True, options={'SKIP_SAVE'})
+
+    def invoke(self, context, event):
+        self.extend = event.shift
+        self.show_popup = not event.ctrl
+        return self.execute(context)
 
     def execute(self, context):
         linked_ids, objects = get_library_users(self.library_path)
@@ -395,13 +405,17 @@ class PATHACTION_OT_select_library_users(Operator):
 
         ## Select related objects (only possible if in current view layer and selectable)
         view_layer_objects = set(context.view_layer.objects)
-        for ob in context.view_layer.objects:
-            ob.select_set(False)
+        if not self.extend:
+            for ob in context.view_layer.objects:
+                ob.select_set(False)
         for ob in objects:
             if ob in view_layer_objects:
                 ob.select_set(True)
         selected = [ob for ob in objects if ob in view_layer_objects and ob.select_get()]
-        if selected and context.view_layer.objects.active not in selected:
+        active = context.view_layer.objects.active
+        ## In extend mode, keep active if it is part of the previous selection
+        keep_active = active in selected or (self.extend and active and active.select_get())
+        if selected and not keep_active:
             context.view_layer.objects.active = selected[0]
 
         ## Report linked datablocks by type
@@ -429,7 +443,7 @@ class PATHACTION_OT_select_library_users(Operator):
             layout.label(text=select_line, icon='RESTRICT_SELECT_OFF')
 
         ## popup_menu crashes blender without a window (background mode)
-        if not bpy.app.background and context.window:
+        if self.show_popup and not bpy.app.background and context.window:
             context.window_manager.popup_menu(draw, title=f"Linked from {bpy.path.basename(self.library_path)}", icon='LIBRARY_DATA_DIRECT')
         self.report({'INFO'}, f"{len(linked_ids)} linked datablocks, {select_line}")
         return {'FINISHED'}
