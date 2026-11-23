@@ -290,20 +290,22 @@ class PATH_OT_open_blend_folder(Operator):
         self.alt = event.alt
         self.shift = event.shift
 
-        ## Hidden shortcut (not in tooltip): Ctrl+Shift+Alt toggles dev mode in addon prefs
+        ## Hidden shortcut (not in tooltip): Ctrl+Shift+Alt enables dev mode in addon prefs,
+        ## once enabled, opens links checker
         if self.ctrl and self.shift and self.alt:
             prefs = context.preferences.addons[__package__].preferences
-            prefs.dev_mode = not prefs.dev_mode
+            if prefs.dev_mode:
+                bpy.ops.pathaction.links_checker('INVOKE_DEFAULT')
+                return {'FINISHED'}
+            prefs.dev_mode = True
             context.preferences.is_dirty = True # saved with auto-save preferences
-            tag_topbar_redraw() # show / hide dev mode buttons (full reopen)
-            self.report({'INFO'}, f"Path Actions: dev mode {'enabled' if prefs.dev_mode else 'disabled'}")
+            tag_topbar_redraw() # show dev mode buttons (full reopen)
+            self.report({'INFO'}, "Path Actions: dev mode enabled")
             return {'FINISHED'}
 
-        ## Hidden shortcut (not in tooltip): Shift+Alt opens links checker, only in dev mode
+        ## Hidden shortcut (not in tooltip): Shift+Alt opens addon preferences search popup
         if self.shift and self.alt and not self.ctrl:
-            if context.preferences.addons[__package__].preferences.dev_mode:
-                bpy.ops.pathaction.links_checker('INVOKE_DEFAULT')
-            ## Return in any case: must not fall back to Shift action (open side blend)
+            bpy.ops.path.search_open_addon_preferences('INVOKE_DEFAULT')
             return {'FINISHED'}
 
         if not bpy.data.is_saved and not (self.alt and not self.ctrl and not self.shift):
