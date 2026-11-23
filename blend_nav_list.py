@@ -21,6 +21,7 @@ MAX_NAME_LEN = 50
 ## (a "save as" afterwards keeps previous targets until next refresh)
 _nav = {
     'files': [], # path strings as written in file
+    'search_targets': {'NAME': [], 'PATH': [], 'PARENT': []}, # lowercase strings for popup filter
     'display': [], # path relative to common base (popup display)
     'base': '', # common parent folder of listed blends
     'current': -1, # row of current blend at refresh time (popup display only)
@@ -117,8 +118,16 @@ def refresh_nav():
     prev_targets = files[:current][::-1] if current >= 0 else []
     next_targets = files[current + 1:] if current >= 0 else []
 
+    ## Lowercase search targets for popup filter (forward slashes so both separators match)
+    full_paths = [os.path.normpath(f).replace('\\', '/').lower() for f in files]
+
     _nav.update(
         files=files,
+        search_targets={
+            'NAME': [Path(f).stem.lower() for f in files],
+            'PATH': full_paths,
+            'PARENT': [p.rsplit('/', 1)[0] if '/' in p else '' for p in full_paths],
+        },
         display=display,
         base=base,
         current=current,
@@ -248,6 +257,24 @@ class PATHACTION_OT_nav_list_popup(Operator):
         options={'SKIP_SAVE'},
     )
 
+    search : bpy.props.StringProperty(
+        name='Search',
+        description='Filter listed blends, case insensitive\
+            \nSpace-separated words must all be found',
+        default='',
+        options={'TEXTEDIT_UPDATE', 'SKIP_SAVE'},
+    )
+
+    search_on : bpy.props.EnumProperty(
+        name='Search On',
+        items=(
+            ('NAME', 'Name', 'Search in blend name (without extension)'),
+            ('PATH', 'Path', 'Search in full path'),
+            ('PARENT', 'Parent', 'Search in parent folder path'),
+        ),
+        default='NAME',
+    )
+
     def invoke(self, context, event):
         ## Re-read: list file may have been edited externally
         refresh_nav()
@@ -296,26 +323,48 @@ class PATHACTION_OT_nav_list_popup(Operator):
             layout.label(text='No navigation list (cleared or empty)', icon='INFO')
             return
 
+        ## -- Search filter
+        split = layout.split(factor=0.6, align=True)
+        split.prop(self, 'search', text='', icon='VIEWZOOM', placeholder='Search')
+        split.row(align=True).prop(self, 'search_on', expand=True)
+
+        ## Indices of matching blends (list position is kept for numbering)
+        terms = self.search.lower().split()
+        if terms:
+            targets = _nav['search_targets'][self.search_on]
+            indices = [i for i, t in enumerate(targets) if all(term in t for term in terms)]
+            if not indices:
+                layout.label(text='No match', icon='INFO')
+                return
+        else:
+            indices = list(range(len(files)))
+        total = len(indices)
+        match_info = f" {'match' if total == 1 else 'matches'} (of {len(files)})" if terms else ''
+
         ## Display a window around current blend when list is long (unless "show all")
-        cropped = len(files) > MAX_DISPLAY and not self.show_all
+        cropped = total > MAX_DISPLAY and not self.show_all
         start = 0
-        end = len(files)
+        end = total
         if cropped:
-            if idx >= 0:
-                start = min(max(0, idx - MAX_DISPLAY // 2), len(files) - MAX_DISPLAY)
+            if idx in indices:
+                start = min(max(0, indices.index(idx) - MAX_DISPLAY // 2), total - MAX_DISPLAY)
             end = start + MAX_DISPLAY
 
         ## Show all / less toggle, above list (popup opens scrolled to top)
-        if len(files) > MAX_DISPLAY:
+        if total > MAX_DISPLAY:
             row = layout.row()
             sub = row.row()
             sub.active = False
             if cropped:
-                sub.label(text=f'Showing {start + 1}-{end} of {len(files)}')
-                row.prop(self, 'show_all', text=f'Show All ({len(files)})', icon='TRIA_DOWN', toggle=True)
+                sub.label(text=f'Showing {start + 1}-{end} of {total}{match_info}')
+                row.prop(self, 'show_all', text=f'Show All ({total})', icon='TRIA_DOWN', toggle=True)
             else:
-                sub.label(text=f'Showing all {len(files)}')
+                sub.label(text=f'Showing all {total}{match_info}')
                 row.prop(self, 'show_all', text=f'Show Less ({MAX_DISPLAY})', icon='TRIA_UP', toggle=True)
+        elif terms:
+            row = layout.row()
+            row.active = False
+            row.label(text=f'{total}{match_info}')
 
         if start:
             row = layout.row()
@@ -338,7 +387,7 @@ class PATHACTION_OT_nav_list_popup(Operator):
         option_col.alignment = 'RIGHT'
 
         mtimes = getattr(self, 'mtimes', {})
-        for i in range(start, end):
+        for i in indices[start:end]:
             path = files[i]
             num_row = num_col.row()
             num_row.alignment = 'RIGHT'
@@ -369,10 +418,10 @@ class PATHACTION_OT_nav_list_popup(Operator):
             option_row.operator('wm.open_in_new_instance', text='', icon='FILE_BACKUP').filepath = path
             option_row.operator('pathaction.copy_path', text='', icon='COPYDOWN').path = path
 
-        if end < len(files):
+        if end < total:
             row = layout.row()
             row.active = False
-            row.label(text=f'... {len(files) - end} more below', icon='INFO')
+            row.label(text=f'... {total - end} more below', icon='INFO')
 
     def execute(self, context):
         return {'FINISHED'}
