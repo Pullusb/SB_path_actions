@@ -420,15 +420,30 @@ class PATHACTION_OT_select_library_users(Operator):
 
         ## Report linked datablocks by type
         by_type = {}
+        unused_by_type = {} # linked but without any user
+        fake_only_by_type = {} # linked and only kept by fake user
         for i in linked_ids:
-            by_type.setdefault(type(i).__name__, []).append(i.name)
+            type_name = type(i).__name__
+            by_type.setdefault(type_name, []).append(i.name)
+            if i.users == 0:
+                unused_by_type[type_name] = unused_by_type.get(type_name, 0) + 1
+            elif i.users == 1 and i.use_fake_user:
+                fake_only_by_type[type_name] = fake_only_by_type.get(type_name, 0) + 1
         select_line = f"{len(selected)} related objects selected"
         if len(selected) < len(objects):
             select_line += f" ({len(objects) - len(selected)} hidden or not in view layer)"
 
+        def type_header(type_name, names):
+            count = f"{len(names)}"
+            if unused := unused_by_type.get(type_name):
+                count += f", {unused} unused"
+            if fake_only := fake_only_by_type.get(type_name):
+                count += f", {fake_only} fake user only"
+            return f"{type_name} ({count})"
+
         print(f"\nLibrary: {self.library_path}")
         for type_name, names in sorted(by_type.items()):
-            print(f"{type_name} ({len(names)}): {', '.join(sorted(names))}")
+            print(f"{type_header(type_name, names)}: {', '.join(sorted(names))}")
         print(select_line)
 
         def draw(popup, context):
@@ -438,7 +453,7 @@ class PATHACTION_OT_select_library_users(Operator):
                 text = ', '.join(sorted(names)[:8])
                 if len(names) > 8:
                     text += ', ...'
-                layout.label(text=f"{type_name} ({len(names)}): {text}")
+                layout.label(text=f"{type_header(type_name, names)}: {text}")
             layout.separator()
             layout.label(text=select_line, icon='RESTRICT_SELECT_OFF')
 
