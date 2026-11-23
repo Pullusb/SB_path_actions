@@ -12,7 +12,7 @@ from bpy.types import Operator
 from . import blend_nav_list
 
 ## Max number of rows drawn in popup (copy to clipboard always use the full filtered list)
-MAX_DISPLAY = 200
+MAX_DISPLAY = 61
 ## Safety: stop going deeper when a level contains too many folders
 MAX_FOLDERS_PER_LEVEL = 10000
 
@@ -214,6 +214,13 @@ class PATH_OT_open_same_depth_blend(Operator):
         options={'TEXTEDIT_UPDATE', 'SKIP_SAVE'},
     )
 
+    show_all : bpy.props.BoolProperty(
+        name='Show All',
+        description=f'Display all listed blends (list is cropped at {MAX_DISPLAY} by default)',
+        default=False,
+        options={'SKIP_SAVE'},
+    )
+
     @classmethod
     def poll(cls, context):
         return bpy.data.is_saved
@@ -287,6 +294,18 @@ class PATH_OT_open_same_depth_blend(Operator):
             layout.label(text='No blend found' if not items else 'No blend matching filters', icon='INFO')
             return
 
+        ## -- Show all / less toggle, above list (popup opens scrolled to top)
+        if len(filtered) > MAX_DISPLAY:
+            row = layout.row()
+            sub = row.row()
+            sub.active = False
+            if self.show_all:
+                sub.label(text=f'Showing all {len(filtered)}')
+                row.prop(self, 'show_all', text=f'Show Less ({MAX_DISPLAY})', icon='TRIA_UP', toggle=True)
+            else:
+                sub.label(text=f'Showing {MAX_DISPLAY} of {len(filtered)}')
+                row.prop(self, 'show_all', text=f'Show All ({len(filtered)})', icon='TRIA_DOWN', toggle=True)
+
         ## -- Blend list (same layout as open side blend)
         main_row = layout.row(align=True)
         blend_col = main_row.column(align=True)
@@ -298,7 +317,8 @@ class PATH_OT_open_same_depth_blend(Operator):
         option_col = main_row.column(align=True)
         option_col.alignment = 'RIGHT'
 
-        for item in filtered[:MAX_DISPLAY]:
+        displayed = filtered if self.show_all else filtered[:MAX_DISPLAY]
+        for item in displayed:
             path = item.path
             blend_row = blend_col.row()
             blend_row.alignment = 'LEFT'
@@ -324,10 +344,10 @@ class PATH_OT_open_same_depth_blend(Operator):
             option_row.operator('wm.open_in_new_instance', text='', icon='FILE_BACKUP').filepath = str(path)
             option_row.operator('pathaction.copy_path', text='', icon='COPYDOWN').path = str(path)
 
-        if len(filtered) > MAX_DISPLAY:
+        if len(filtered) > MAX_DISPLAY and not self.show_all:
             row = layout.row()
             row.active = False
-            row.label(text=f'... {len(filtered) - MAX_DISPLAY} more not displayed (refine filters)', icon='INFO')
+            row.label(text=f'... {len(filtered) - MAX_DISPLAY} more not displayed', icon='INFO')
 
     def execute(self, context):
         return {'FINISHED'}

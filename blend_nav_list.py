@@ -12,7 +12,7 @@ from bpy.types import Operator
 
 LIST_FILENAME = 'path_actions_nav_list.txt'
 ## Max number of rows drawn in list popup (window centered on current blend)
-MAX_DISPLAY = 250
+MAX_DISPLAY = 61
 ## Topbar prev / next names longer than this are shortened in the middle
 MAX_NAME_LEN = 50
 
@@ -241,6 +241,13 @@ class PATHACTION_OT_nav_list_popup(Operator):
         \nList file can be generated from 'Same Depth Blend' popup or edited manually (one path per line)"
     bl_options = {'REGISTER'}
 
+    show_all : bpy.props.BoolProperty(
+        name='Show All',
+        description=f'Display all listed blends (list is cropped at {MAX_DISPLAY} around current blend by default)',
+        default=False,
+        options={'SKIP_SAVE'},
+    )
+
     def invoke(self, context, event):
         ## Re-read: list file may have been edited externally
         refresh_nav()
@@ -289,11 +296,26 @@ class PATHACTION_OT_nav_list_popup(Operator):
             layout.label(text='No navigation list (cleared or empty)', icon='INFO')
             return
 
-        ## Display a window around current blend when list is long
+        ## Display a window around current blend when list is long (unless "show all")
+        cropped = len(files) > MAX_DISPLAY and not self.show_all
         start = 0
-        if len(files) > MAX_DISPLAY and idx >= 0:
-            start = min(max(0, idx - MAX_DISPLAY // 2), len(files) - MAX_DISPLAY)
-        end = min(len(files), start + MAX_DISPLAY)
+        end = len(files)
+        if cropped:
+            if idx >= 0:
+                start = min(max(0, idx - MAX_DISPLAY // 2), len(files) - MAX_DISPLAY)
+            end = start + MAX_DISPLAY
+
+        ## Show all / less toggle, above list (popup opens scrolled to top)
+        if len(files) > MAX_DISPLAY:
+            row = layout.row()
+            sub = row.row()
+            sub.active = False
+            if cropped:
+                sub.label(text=f'Showing {start + 1}-{end} of {len(files)}')
+                row.prop(self, 'show_all', text=f'Show All ({len(files)})', icon='TRIA_DOWN', toggle=True)
+            else:
+                sub.label(text=f'Showing all {len(files)}')
+                row.prop(self, 'show_all', text=f'Show Less ({MAX_DISPLAY})', icon='TRIA_UP', toggle=True)
 
         if start:
             row = layout.row()
