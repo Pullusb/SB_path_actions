@@ -34,6 +34,7 @@ Add a folder icon button at the right of the topbar that open Blend's current di
 Modifier-keys + click on the button to trigger other actions:
 - `Ctrl + Click` : Copy Blend path
 - `Shift + Click` : Open Side Blend
+- `Ctrl + Shift + Click` : Open Same Depth Blend
 - `Alt + Click` : Alternative actions
 - `Cltr + Alt + Click` : Copy formatted path to Blend popup
 
@@ -45,6 +46,26 @@ List other blend file in the same folder as current blend (ordered):
 - Click on "copy" icon to **copy path to blend**
 
 ![Open side blend](https://github.com/Pullusb/images_repo/blob/master/PA_v2_open_side_blend.png)
+
+## Open Same Depth Blend (Ctrl + Shift + Click)
+
+List blends located at the same depth as current blend in surrounding folders (ex: same task in other shots folders):
+- `Parent Levels`: how many parent folders to go up before listing (default 1, `0` lists only current folder)
+- Search bar to filter on relative path
+- Parent folder name filter, to keep only blends having this folder in their path (ex: `anim`)
+- `Latest Only`: show only the last blend of each folder
+- `Copy List`: copy full path of all filtered blends to clipboard
+- `To Navigation List`: set filtered blends as navigation list (see below)
+
+## Navigation List
+
+When a navigation list exists, buttons appear in the topbar next to the folder icon: `◀ previous` / list popup / `next ▶`, to step through the listed blends (in list order). Missing files are skipped.  
+If the current blend is not in the list, only the list button is shown.  
+`Ctrl + Click` on previous / next opens without asking to save changes (unsaved changes are lost).
+
+The list popup shows all listed blends (click to open), with buttons to copy the list, clear it (hiding the topbar buttons) and open the list file location.
+
+The list is a plain text file in user config folder: `path_actions_nav_list.txt`, one blend path per line (blank lines and lines starting with `#` are ignored). It can be written by hand or by any external tool, it is read again on each file load.
 
 ### Alternative actions (Alt + Click)
 

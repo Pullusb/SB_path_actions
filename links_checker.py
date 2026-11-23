@@ -357,6 +357,319 @@ class PATHACTION_OT_replace_file_library(Operator):
                 
         return bpy.ops.pathaction.update_file_path(source_path=self.source_path, target_path=self.filepath)
 
+def get_library_ids(library_path, id_type='', id_name=''):
+    """Return datablocks linked from the library, optionally filtered by type name (ex: 'Mesh') and datablock name"""
+    return [i for lib in bpy.data.libraries if lib.filepath == library_path for i in lib.users_id
+            if (not id_type or type(i).__name__ == id_type) and (not id_name or i.name == id_name)]
+
+def get_related_objects(ids, user_map=None):
+    """Return objects related to passed datablocks
+    (themselves if objects, overrides and local objects using them, ex: linked material > local mesh > object)"""
+    objects = {i for i in ids if isinstance(i, bpy.types.Object)}
+    if user_map is None:
+        user_map = bpy.data.user_map()
+
+    ## Go up the users chain, stop at objects (containers like collections and scenes are skipped)
+    viewed = set(ids)
+    to_check = list(ids)
+    while to_check:
+        for user in user_map.get(to_check.pop(), ()):
+            if user in viewed:
+                continue
+            viewed.add(user)
+            if isinstance(user, bpy.types.Object):
+                objects.add(user)
+            elif not isinstance(user, (bpy.types.Collection, bpy.types.Scene)):
+                to_check.append(user)
+    return objects
+
+def get_library_users(library_path, id_type='', id_name=''):
+    """Return datablocks linked from the library and the objects related to them"""
+    linked_ids = get_library_ids(library_path, id_type, id_name)
+    return linked_ids, get_related_objects(linked_ids)
+
+def get_id_icon(id):
+    """Return the icon of the datablock type (ex: 'MESH_DATA' for a mesh)"""
+    try:
+        return bpy.types.ID.bl_rna.properties['id_type'].enum_items[id.id_type].icon
+    except (KeyError, AttributeError):
+        return 'BLANK1'
+
+class PATHACTION_OT_select_library_users(Operator):
+    bl_idname = "pathaction.select_library_users"
+    bl_label = "Select Library Users"
+    bl_description = "List datablocks linked from this library\
+        \nand select related objects in viewport (linked, overrides or using linked data)\
+        \n\
+        \nShift: Extend selection (keep previous selection)\
+        \nCtrl: Do not show the infos popup"
+    bl_options = {"REGISTER", "INTERNAL", "UNDO"}
+
+    library_path: bpy.props.StringProperty(options={'SKIP_SAVE'})
+    ## Optional filters (used from details popups). When filtered, only a report is done (no infos popup)
+    id_type: bpy.props.StringProperty(options={'SKIP_SAVE'})
+    id_name: bpy.props.StringProperty(options={'SKIP_SAVE'})
+    extend: bpy.props.BoolProperty(name="Extend", default=False, options={'SKIP_SAVE'})
+    show_popup: bpy.props.BoolProperty(name="Show Popup", default=True, options={'SKIP_SAVE'})
+
+    @classmethod
+    def description(cls, context, properties):
+        if properties.id_name:
+            return f"Select objects related to {properties.id_type} '{properties.id_name}'\
+                \nShift: Extend selection (keep previous selection)"
+        if properties.id_type:
+            return f"Select objects related to all {properties.id_type} datablocks linked from this library\
+                \nShift: Extend selection (keep previous selection)"
+        return cls.bl_description
+
+    def invoke(self, context, event):
+        self.extend = event.shift
+        self.show_popup = not event.ctrl
+        return self.execute(context)
+
+    def execute(self, context):
+        linked_ids, objects = get_library_users(self.library_path, self.id_type, self.id_name)
+        if not linked_ids:
+            self.report({'WARNING'}, f"No datablock linked from: {self.library_path}")
+            return {'CANCELLED'}
+
+        ## Select related objects (only possible if in current view layer and selectable)
+        view_layer_objects = set(context.view_layer.objects)
+        if not self.extend:
+            for ob in context.view_layer.objects:
+                ob.select_set(False)
+        for ob in objects:
+            if ob in view_layer_objects:
+                ob.select_set(True)
+        selected = [ob for ob in objects if ob in view_layer_objects and ob.select_get()]
+        active = context.view_layer.objects.active
+        ## In extend mode, keep active if it is part of the previous selection
+        keep_active = active in selected or (self.extend and active and active.select_get())
+        if selected and not keep_active:
+            context.view_layer.objects.active = selected[0]
+
+        select_line = f"{len(selected)} related objects selected"
+        if len(selected) < len(objects):
+            select_line += f" ({len(objects) - len(selected)} hidden or not in view layer)"
+
+        ## Filtered call (from details popup): only report
+        if self.id_type or self.id_name:
+            target = f"{self.id_type} '{self.id_name}'" if self.id_name else f"{len(linked_ids)} {self.id_type}"
+            self.report({'INFO'}, f"{target}: {select_line}")
+            return {'FINISHED'}
+
+        print(f"\nLibrary: {self.library_path}")
+        for type_name, header, names in get_type_summary(linked_ids):
+            print(f"{header}: {', '.join(names)}")
+        print(select_line)
+
+        ## Popup crashes blender without a window (background mode)
+        if self.show_popup and not bpy.app.background and context.window:
+            bpy.ops.pathaction.library_infos('INVOKE_DEFAULT', library_path=self.library_path, select_line=select_line)
+        self.report({'INFO'}, f"{len(linked_ids)} linked datablocks, {select_line}")
+        return {'FINISHED'}
+
+def get_type_summary(linked_ids):
+    """Return a list of (type_name, header, sorted_names) for linked datablocks, sorted by type
+    header contains count of datablocks, unused and kept only by fake user (ex: 'Mesh (3, 1 unused)')"""
+    by_type = {}
+    for i in linked_ids:
+        by_type.setdefault(type(i).__name__, []).append(i)
+    summary = []
+    for type_name, ids in sorted(by_type.items()):
+        count = f"{len(ids)}"
+        if unused := sum(1 for i in ids if i.users == 0):
+            count += f", {unused} unused"
+        if fake_only := sum(1 for i in ids if i.users == 1 and i.use_fake_user):
+            count += f", {fake_only} fake user only"
+        summary.append((type_name, f"{type_name} ({count})", sorted(i.name for i in ids)))
+    return summary
+
+def text_width(text):
+    """Approximate width of a UI label text at UI scale 1 (popup widths are scaled by Blender)"""
+    import blf
+    blf.size(0, 11)
+    return blf.dimensions(0, text)[0]
+
+## Popups use invoke_popup (regular layout): popup_menu uses a menu layout
+## where icon buttons and multiple columns overlap.
+
+class PATHACTION_OT_library_infos(Operator):
+    bl_idname = "pathaction.library_infos"
+    bl_label = "Linked Library Infos"
+    bl_description = "Show datablocks linked from this library, by type"
+    bl_options = {"INTERNAL"}
+
+    library_path: bpy.props.StringProperty(options={'SKIP_SAVE'})
+    select_line: bpy.props.StringProperty(options={'SKIP_SAVE'})
+
+    max_names = 8
+
+    def invoke(self, context, event):
+        linked_ids = get_library_ids(self.library_path)
+        if not linked_ids:
+            self.report({'WARNING'}, f"No datablock linked from: {self.library_path}")
+            return {'CANCELLED'}
+
+        ## Store plain data only (no ID references kept while popup is open)
+        self.rows = []
+        for type_name, header, names in get_type_summary(linked_ids):
+            ## Limit displayed names (full list is printed in console and in details popup)
+            text = ', '.join(names[:self.max_names])
+            if len(names) > self.max_names:
+                text += ', ...'
+            self.rows.append((type_name, f"{header}: {text}"))
+
+        self.title = f"Linked from {bpy.path.basename(self.library_path)}"
+        width = max(text_width(t) for t in [self.title, self.select_line] + [r[1] for r in self.rows])
+        return context.window_manager.invoke_popup(self, width=int(min(width + 60, 1200)))
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'INVOKE_REGION_WIN'
+        layout.label(text=self.title, icon='LIBRARY_DATA_DIRECT')
+        layout.separator()
+
+        for type_name, text in self.rows:
+            row = layout.row()
+            row.alignment = 'LEFT'
+            buttons = row.row(align=True)
+            props = buttons.operator('pathaction.library_type_details', text='', icon='PRESET')
+            props.library_path = self.library_path
+            props.id_type = type_name
+            props = buttons.operator('pathaction.select_library_users', text='', icon='RESTRICT_SELECT_OFF')
+            props.library_path = self.library_path
+            props.id_type = type_name
+            row.label(text=text)
+
+        if self.select_line:
+            layout.separator()
+            layout.label(text=self.select_line, icon='INFO')
+
+    def execute(self, context):
+        return {'FINISHED'}
+
+class PATHACTION_OT_library_type_details(Operator):
+    bl_idname = "pathaction.library_type_details"
+    bl_label = "Linked Datablocks Details"
+    bl_description = "Show details of linked datablocks of this type\
+        \n(users, fake user, overrides, related objects)\
+        \nwith per-datablock actions"
+    bl_options = {"INTERNAL"}
+
+    library_path: bpy.props.StringProperty(options={'SKIP_SAVE'})
+    id_type: bpy.props.StringProperty(options={'SKIP_SAVE'})
+
+    max_rows = 40
+
+    def invoke(self, context, event):
+        linked_ids = sorted(get_library_ids(self.library_path, self.id_type), key=lambda i: i.name)
+        if not linked_ids:
+            self.report({'WARNING'}, f"No {self.id_type} linked from: {self.library_path}")
+            return {'CANCELLED'}
+
+        user_map = bpy.data.user_map()
+        ## Linked datablocks that have local overrides (user_map keys contain all datablocks)
+        overridden = {k.override_library.reference for k in user_map
+                      if k.override_library and k.override_library.reference}
+        view_layer = context.view_layer
+        view_layer_objects = set(view_layer.objects)
+
+        ## Store plain data only (no ID references kept while popup is open)
+        rows = self.rows = []
+        for i in linked_ids:
+            related = get_related_objects([i], user_map)
+            in_layer = [ob for ob in related if ob in view_layer_objects]
+            selectable = [ob for ob in in_layer if ob.visible_get(view_layer=view_layer) and not ob.hide_select]
+            if i.is_missing:
+                link_icon = 'LIBRARY_DATA_BROKEN'
+            elif i.is_library_indirect:
+                link_icon = 'LIBRARY_DATA_INDIRECT'
+            else:
+                link_icon = 'LIBRARY_DATA_DIRECT'
+            rows.append({
+                'name': i.name,
+                'icon': get_id_icon(i),
+                'users': i.users,
+                'fake_user': i.use_fake_user,
+                'overridden': i in overridden,
+                'link_icon': link_icon,
+                'related': len(related),
+                'selectable': len(selectable),
+            })
+
+        print(f"\n{self.id_type} linked from: {self.library_path}")
+        for r in rows:
+            flags = [f for f, ok in (('fake user', r['fake_user']), ('overridden', r['overridden']),
+                                      ('missing', r['link_icon'] == 'LIBRARY_DATA_BROKEN'),
+                                      ('indirect', r['link_icon'] == 'LIBRARY_DATA_INDIRECT')) if ok]
+            flags = f" [{', '.join(flags)}]" if flags else ''
+            print(f"  {r['name']}: {r['users']} users, {r['related']} related objects ({r['selectable']} selectable){flags}")
+
+        for r in rows:
+            r['related_text'] = f"{r['related']} related objects"
+            if r['selectable'] < r['related']:
+                r['related_text'] += f" ({r['related'] - r['selectable']} not selectable)"
+
+        ## Fixed column widths in UI units (20px at UI scale 1, scaled by Blender) keep rows aligned
+        shown = rows[:self.max_rows]
+        unit = 20
+        self.col_units = (
+            1, # select button
+            max(text_width(r['name']) for r in shown) / unit + 1.6, # icon + name
+            max(text_width(f"{r['users']} users") for r in shown) / unit + 1.6, # icon + users
+            3.2, # 3 icon slots
+            max(text_width(r['related_text']) for r in shown) / unit + 0.8,
+        )
+        self.title = f"{self.id_type} linked from {bpy.path.basename(self.library_path)}"
+        width = max(sum(self.col_units) * unit, text_width(self.title) + 40)
+        return context.window_manager.invoke_popup(self, width=int(min(width + 20, 1400)))
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'INVOKE_REGION_WIN'
+        layout.label(text=self.title, icon='LIBRARY_DATA_DIRECT')
+
+        props = layout.operator('pathaction.select_library_users',
+                                text=f"Select Objects Related To All {self.id_type} ({len(self.rows)})",
+                                icon='RESTRICT_SELECT_OFF')
+        props.library_path = self.library_path
+        props.id_type = self.id_type
+        layout.separator()
+
+        row = layout.row()
+        row.alignment = 'LEFT'
+        cols = [row.column() for _ in self.col_units]
+        for col, units in zip(cols, self.col_units):
+            col.ui_units_x = units
+        col_select, col_name, col_users, col_flags, col_related = cols
+
+        for r in self.rows[:self.max_rows]:
+            sub = col_select.row()
+            sub.enabled = r['selectable'] > 0
+            props = sub.operator('pathaction.select_library_users', text='', icon='RESTRICT_SELECT_OFF')
+            props.library_path = self.library_path
+            props.id_type = self.id_type
+            props.id_name = r['name']
+
+            col_name.label(text=r['name'], icon=r['icon'])
+
+            col_users.label(text=f"{r['users']} users", icon='ERROR' if r['users'] == 0 else 'BLANK1')
+
+            ## Fixed icon slots: link status, fake user, override
+            flags = col_flags.row(align=True)
+            flags.label(text='', icon=r['link_icon'])
+            flags.label(text='', icon='FAKE_USER_ON' if r['fake_user'] else 'BLANK1')
+            flags.label(text='', icon='LIBRARY_DATA_OVERRIDE' if r['overridden'] else 'BLANK1')
+
+            col_related.label(text=r['related_text'])
+
+        if len(self.rows) > self.max_rows:
+            layout.label(text=f"... {len(self.rows) - self.max_rows} more (full list printed in console)", icon='INFO')
+
+    def execute(self, context):
+        return {'FINISHED'}
+
 class PATHACTION_OT_check_latest_versions(Operator):
     bl_idname = "pathaction.check_latest_versions"
     bl_label = "Check Latest Versions"
@@ -452,7 +765,13 @@ class PATHACTION_OT_links_checker(Operator):
         description="Reverse the sort order",
         default=False
     )
-    
+
+    show_bundled: bpy.props.BoolProperty(
+        name="Show Bundled",
+        description="Show paths shipped with Blender install (ex: essentials assets)",
+        default=False
+    )
+
     def invoke(self, context, event):
         # Call the external check_links function
         check_links(context)
@@ -467,7 +786,7 @@ class PATHACTION_OT_links_checker(Operator):
                 max_length = max(len(path) for path in paths)
                 # Approximate width based on characters (this is a rough estimate)
                 char_width = 7  # pixels per character
-                button_width = 120  # space for buttons
+                button_width = 140  # space for buttons
                 self.popup_width = min(max(450, int(max_length * char_width + button_width)), 1200)
         except Exception:
             pass
@@ -548,7 +867,10 @@ class PATHACTION_OT_links_checker(Operator):
         row.prop(self, "reverse_sort", text="", icon='SORT_ASC' if not self.reverse_sort else 'SORT_DESC')
         
         row.prop(self, 'search_field', text="", icon='VIEWZOOM')
-        
+
+        if wm.pa_links_stats.bundled_count:
+            row.prop(self, 'show_bundled')
+
         # Version check for blend files (if any)
         if any(item.is_blend and item.is_valid for item in list_collection):
             check_row = layout.row()
@@ -561,19 +883,26 @@ class PATHACTION_OT_links_checker(Operator):
             layout.label(text='No external links found', icon='INFO')
             return
         
-        # Filter by search
-        filtered_items = list_collection
-        
+        # Filter out bundled paths if disabled
+        visible_items = list_collection
+        if not self.show_bundled:
+            visible_items = [item for item in list_collection if not item.is_bundled]
+            if not visible_items:
+                layout.label(text='Only bundled paths (hidden)', icon='INFO')
+                return
+
+        filtered_items = visible_items
+
         # Apply search filter if text entered
         search_terms = self.search_field
         if search_terms:
             ## Note: using '.removeprefix('//')' before using 'Path().name' because Pathlib starting with '//' considered as UNC path on Windows.
             ## with only one parent ("//../some_file.ext"), last part is misinterpreted as being a folder (thus Path.name returns empty string)
-            filtered_items = [item for item in list_collection if search_terms.lower() in Path(item.path.removeprefix('//')).name.lower()]
+            filtered_items = [item for item in visible_items if search_terms.lower() in Path(item.path.removeprefix('//')).name.lower()]
 
             # Nothing found in name, fall back in full path search
             if not filtered_items:
-                filtered_items = [item for item in list_collection if search_terms.lower() in item.path.lower()]
+                filtered_items = [item for item in visible_items if search_terms.lower() in item.path.lower()]
                 if filtered_items:
                     layout.label(text=f'Match path (nothing in names)', icon='INFO')
 
@@ -706,8 +1035,12 @@ class PATHACTION_OT_links_checker(Operator):
                 if Path(bpy.path.abspath(parent_dir)).exists():
                     op.filepath = parent_dir
 
+                # List linked datablocks and select related objects
+                action_row.operator("pathaction.select_library_users", text="", icon='RESTRICT_SELECT_OFF').library_path = item.path
+
             else:
                 # Add placeholders for consistent spacing
+                action_row.label(text="", icon='BLANK1')  # Select users placeholder
                 action_row.label(text="", icon='BLANK1')  # Update target placeholder
                 action_row.label(text="", icon='BLANK1')  # New instance placeholder
                 action_row.label(text="", icon='BLANK1')  # Edit path placeholder
@@ -752,6 +1085,9 @@ classes = (
     PATHACTION_OT_update_file_path,
     PATHACTION_OT_edit_file_path,
     PATHACTION_OT_replace_file_library,
+    PATHACTION_OT_select_library_users,
+    PATHACTION_OT_library_infos,
+    PATHACTION_OT_library_type_details,
     PATHACTION_OT_check_latest_versions,
     PATHACTION_OT_update_to_latest_versions,
     PATHACTION_OT_links_checker,

@@ -402,6 +402,12 @@ def show_open_ops_on_outliner_entry(self, context):
     if path.endswith('.blend'):
         col.operator('wm.open_in_new_instance', icon='FILE_BACKUP').filepath = str(path)
 
+    if isinstance(id, bpy.types.Library):
+        ## Force invoke to get Shift (extend) / Ctrl (no popup) modifiers
+        ## In the outliner right clic menu items alrteady goes through invoke, but keeping in case it changes in the future.
+        col.operator_context = 'INVOKE_REGION_WIN'
+        col.operator('pathaction.select_library_users', icon='RESTRICT_SELECT_OFF').library_path = path
+
     self.layout.separator()
 
 classes = (

@@ -1,4 +1,5 @@
 import bpy
+from . import blend_nav_list
 
 ### Topbar
 # add a button on top bar : TOPBAR_HT_upper_bar (there is a def draw_left and a def draw_right )
@@ -11,6 +12,8 @@ def TopBarOpenButton(self, context):
     layout = self.layout
     region = context.region
     if region.alignment == 'RIGHT':
+        ## Previous / list / next buttons when a navigation list exists
+        blend_nav_list.draw_nav_buttons(layout, context)
         if get_addon_prefs().dev_mode:
             layout.operator("wm.full_reopen", text = "", icon = 'FILE_REFRESH')
         layout.operator("wm.open_blend_folder", text = "", icon = 'FILE_FOLDER')

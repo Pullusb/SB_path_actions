@@ -5,6 +5,7 @@ from bpy.types import Operator, Panel
 from os.path import dirname, abspath
 
 from .path_func import open_folder
+from .blend_nav_list import tag_topbar_redraw
 from .prefs import blender_locations
 
 
@@ -20,6 +21,7 @@ class PATHACTION_PT_blend_location_ui(Panel):
         layout = self.layout
         layout.operator("pathaction.blend_history", text="File History", icon='FILE_BLEND') # BLENDER
         layout.operator("path.copy_blend_path", text="Copy Formatted Blend Path", icon='COPYDOWN') # Copy Blend Path Format...
+        # layout.operator("wm.open_same_depth_blend", text="Same Depth Blends", icon='FILE_PARENT')
         layout.separator()
         blender_locations(layout)
 
@@ -274,6 +276,7 @@ class PATH_OT_open_blend_folder(Operator):
         \n\
         \nCtrl: Copy path to blend\
         \nShift: Open a side blend\
+        \nCtrl+Shift: Open a same depth blend (surrounding folders)\
         \nAlt: History and blend app locations\
         \nCtrl+Alt: Copy formatted blend path"
     bl_options = {'REGISTER'}
@@ -286,6 +289,25 @@ class PATH_OT_open_blend_folder(Operator):
         self.ctrl = event.ctrl
         self.alt = event.alt
         self.shift = event.shift
+
+        ## Hidden shortcut (not in tooltip): Ctrl+Shift+Alt enables dev mode in addon prefs,
+        ## once enabled, opens links checker
+        if self.ctrl and self.shift and self.alt:
+            prefs = context.preferences.addons[__package__].preferences
+            if prefs.dev_mode:
+                bpy.ops.pathaction.links_checker('INVOKE_DEFAULT')
+                return {'FINISHED'}
+            prefs.dev_mode = True
+            context.preferences.is_dirty = True # saved with auto-save preferences
+            tag_topbar_redraw() # show dev mode buttons (full reopen)
+            self.report({'INFO'}, "Path Actions: dev mode enabled")
+            return {'FINISHED'}
+
+        ## Hidden shortcut (not in tooltip): Shift+Alt opens addon preferences search popup
+        if self.shift and self.alt and not self.ctrl:
+            bpy.ops.path.search_open_addon_preferences('INVOKE_DEFAULT')
+            return {'FINISHED'}
+
         if not bpy.data.is_saved and not (self.alt and not self.ctrl and not self.shift):
             self.report({'ERROR'}, "Blend not saved: No folder to open or copy")
             return {'CANCELLED'}
@@ -305,6 +327,11 @@ class PATH_OT_open_blend_folder(Operator):
             bpy.ops.path.copy_blend_path('INVOKE_DEFAULT')
             return {'FINISHED'}
         
+        elif self.ctrl and self.shift:
+            ## List blends at same depth in surrounding folders
+            bpy.ops.wm.open_same_depth_blend('INVOKE_DEFAULT')
+            return {'FINISHED'}
+
         elif self.ctrl:
             ## Direct raw path copy
             bpy.context.window_manager.clipboard = fileloc
